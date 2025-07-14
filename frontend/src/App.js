@@ -10,7 +10,7 @@ import {
   IconButton,
   Fab
 } from '@mui/material';
-import { PhotoCamera, Download, Settings } from '@mui/icons-material';
+import { PhotoCamera, Settings } from '@mui/icons-material';
 import ImageUpload from './components/ImageUpload';
 import ProcessingSettings from './components/ProcessingSettings';
 import ResultsDisplay from './components/ResultsDisplay';
