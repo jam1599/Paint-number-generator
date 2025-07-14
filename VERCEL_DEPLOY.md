@@ -51,7 +51,7 @@ vercel
 In Vercel dashboard, add environment variable:
 
 ```
-REACT_APP_API_URL=https://your-backend-domain.onrender.com
+REACT_APP_API_URL=https://paint-number-generator-1.onrender.com/api
 ```
 
 ### 4. Update Backend CORS
@@ -59,7 +59,7 @@ REACT_APP_API_URL=https://your-backend-domain.onrender.com
 Update your Render backend's CORS_ORIGINS environment variable:
 
 ```
-CORS_ORIGINS=https://your-frontend-domain.vercel.app,http://localhost:3000
+CORS_ORIGINS=https://paint-number-generator-56al.vercel.app,http://localhost:3000,http://localhost:3001
 ```
 
 ## Configuration Files
