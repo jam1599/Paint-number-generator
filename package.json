@@ -1,0 +1,38 @@
+{
+  "name": "paint-numbers-generator",
+  "version": "1.0.0",
+  "description": "A web application that transforms images into paint-by-numbers templates",
+  "main": "index.js",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm start",
+    "dev": "cd frontend && npm run dev",
+    "install-frontend": "cd frontend && npm install",
+    "install-backend": "cd backend && pip install -r requirements.txt",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:dev": "docker-compose up --build"
+  },
+  "keywords": [
+    "paint-by-numbers",
+    "image-processing",
+    "react",
+    "flask",
+    "opencv",
+    "web-app"
+  ],
+  "author": "jam1599",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jam1599/Paint-number-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jam1599/Paint-number-generator/issues"
+  },
+  "homepage": "https://github.com/jam1599/Paint-number-generator#readme",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
