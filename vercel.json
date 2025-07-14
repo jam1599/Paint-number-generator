@@ -12,15 +12,11 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://paint-number-generator-1.onrender.com/$1"
-    },
-    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "/api"
+    "REACT_APP_API_URL": "https://paint-number-generator-1.onrender.com/api"
   }
 }
