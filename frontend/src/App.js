@@ -26,15 +26,19 @@ function App() {
   const [processing, setProcessing] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     // Load default settings on component mount
+    console.log('App component mounted');
     loadDefaultSettings();
   }, []);
 
   const loadDefaultSettings = async () => {
     try {
+      console.log('Loading default settings...');
       const response = await apiService.getDefaultSettings();
+      console.log('Default settings loaded:', response.data);
       setDefaultSettings(response.data);
       setSettings(response.data);
     } catch (error) {
@@ -51,9 +55,12 @@ function App() {
         edge_options: [10, 25, 50, 75, 100],
         area_options: [50, 100, 200, 500, 1000]
       };
+      console.log('Using fallback settings:', fallbackSettings);
       setDefaultSettings(fallbackSettings);
       setSettings(fallbackSettings);
       setError('Using offline mode - some features may be limited');
+    } finally {
+      setIsInitialized(true);
     }
   };
 
@@ -172,68 +179,80 @@ function App() {
 
   return (
     <div className="App">
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{ mr: 2 }}
-          >
-            <PhotoCamera />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Paint by Numbers Generator
-          </Typography>
-          {currentStep === 'results' && (
-            <IconButton color="inherit" onClick={handleReset}>
-              <Settings />
-            </IconButton>
+      {!isInitialized ? (
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+          <Paper elevation={3} sx={{ p: 3, minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6">Loading Paint by Numbers Generator...</Typography>
+            </Box>
+          </Paper>
+        </Container>
+      ) : (
+        <>
+          <AppBar position="static">
+            <Toolbar>
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                sx={{ mr: 2 }}
+              >
+                <PhotoCamera />
+              </IconButton>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                Paint by Numbers Generator
+              </Typography>
+              {currentStep === 'results' && (
+                <IconButton color="inherit" onClick={handleReset}>
+                  <Settings />
+                </IconButton>
+              )}
+            </Toolbar>
+          </AppBar>
+
+          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+                {error}
+              </Alert>
+            )}
+
+            <Paper elevation={3} sx={{ p: 3, minHeight: '60vh' }}>
+              {renderCurrentStep()}
+            </Paper>
+
+            {/* Progress indicator */}
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                {['upload', 'settings', 'processing', 'results'].map((step, index) => (
+                  <Box
+                    key={step}
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      backgroundColor: 
+                        step === currentStep ? 'primary.main' :
+                        ['upload', 'settings', 'processing', 'results'].indexOf(currentStep) > index ? 'success.main' : 'grey.300'
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+          </Container>
+
+          {/* Reset FAB */}
+          {currentStep !== 'upload' && (
+            <Fab
+              color="secondary"
+              aria-label="reset"
+              sx={{ position: 'fixed', bottom: 16, right: 16 }}
+              onClick={handleReset}
+            >
+              <PhotoCamera />
+            </Fab>
           )}
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
-
-        <Paper elevation={3} sx={{ p: 3, minHeight: '60vh' }}>
-          {renderCurrentStep()}
-        </Paper>
-
-        {/* Progress indicator */}
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {['upload', 'settings', 'processing', 'results'].map((step, index) => (
-              <Box
-                key={step}
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  backgroundColor: 
-                    step === currentStep ? 'primary.main' :
-                    ['upload', 'settings', 'processing', 'results'].indexOf(currentStep) > index ? 'success.main' : 'grey.300'
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-      </Container>
-
-      {/* Reset FAB */}
-      {currentStep !== 'upload' && (
-        <Fab
-          color="secondary"
-          aria-label="reset"
-          sx={{ position: 'fixed', bottom: 16, right: 16 }}
-          onClick={handleReset}
-        >
-          <PhotoCamera />
-        </Fab>
+        </>
       )}
     </div>
   );
