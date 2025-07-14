@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "name": "paint-numbers-generator",
+  "buildCommand": "cd frontend && npm ci && npm run build",
+  "outputDirectory": "frontend/build",
+  "installCommand": "cd frontend && npm ci",
+  "framework": "create-react-app",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://paint-numbers-backend.onrender.com/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://paint-numbers-backend.onrender.com/api"
+  }
+}
