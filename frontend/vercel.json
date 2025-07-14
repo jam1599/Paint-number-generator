@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "name": "paint-numbers-frontend",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://your-backend-domain.onrender.com"
+  }
+}
