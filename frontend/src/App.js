@@ -39,7 +39,21 @@ function App() {
       setSettings(response.data);
     } catch (error) {
       console.error('Error loading default settings:', error);
-      setError('Failed to load default settings');
+      // Use fallback default settings if API fails
+      const fallbackSettings = {
+        num_colors: 15,
+        blur_amount: 2,
+        edge_threshold: 50,
+        min_area: 50,
+        output_format: 'svg',
+        color_options: [5, 10, 15, 20, 25, 30],
+        blur_options: [0, 1, 2, 3, 4, 5],
+        edge_options: [10, 25, 50, 75, 100],
+        area_options: [50, 100, 200, 500, 1000]
+      };
+      setDefaultSettings(fallbackSettings);
+      setSettings(fallbackSettings);
+      setError('Using offline mode - some features may be limited');
     }
   };
 
@@ -101,39 +115,58 @@ function App() {
   };
 
   const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 'upload':
-        return (
-          <ImageUpload
-            onFileUpload={handleFileUpload}
-            processing={processing}
-          />
-        );
-      case 'settings':
-        return (
-          <ProcessingSettings
-            settings={settings}
-            defaultSettings={defaultSettings}
-            onSettingsChange={handleSettingsChange}
-            onProcess={handleProcessImage}
-            uploadedFile={uploadedFile}
-            processing={processing}
-          />
-        );
-      case 'processing':
-        return (
-          <LoadingSpinner message="Processing your image..." />
-        );
-      case 'results':
-        return (
-          <ResultsDisplay
-            results={results}
-            onDownload={handleDownload}
-            onReset={handleReset}
-          />
-        );
-      default:
-        return null;
+    try {
+      switch (currentStep) {
+        case 'upload':
+          return (
+            <ImageUpload
+              onFileUpload={handleFileUpload}
+              processing={processing}
+            />
+          );
+        case 'settings':
+          return (
+            <ProcessingSettings
+              settings={settings}
+              defaultSettings={defaultSettings}
+              onSettingsChange={handleSettingsChange}
+              onProcess={handleProcessImage}
+              uploadedFile={uploadedFile}
+              processing={processing}
+            />
+          );
+        case 'processing':
+          return (
+            <LoadingSpinner message="Processing your image..." />
+          );
+        case 'results':
+          return (
+            <ResultsDisplay
+              results={results}
+              onDownload={handleDownload}
+              onReset={handleReset}
+            />
+          );
+        default:
+          return (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="h6">Welcome to Paint by Numbers Generator</Typography>
+              <Typography variant="body1" sx={{ mt: 2 }}>
+                Upload an image to get started!
+              </Typography>
+            </Box>
+          );
+      }
+    } catch (error) {
+      console.error('Render error:', error);
+      return (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" color="error">Something went wrong</Typography>
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            Please refresh the page and try again.
+          </Typography>
+        </Box>
+      );
     }
   };
 
