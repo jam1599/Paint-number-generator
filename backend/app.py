@@ -30,7 +30,8 @@ vercel_urls = [
     'https://paint-number-generator-git-main-jm-team.vercel.app',
     'https://paint-number-generator-gbbmect08-jm-team.vercel.app',
     'https://paint-number-generator-space.vercel.app',
-    'https://paint-number-generator-git-main-jm-personal-workspace.vercel.app'
+    'https://paint-number-generator-git-main-jm-personal-workspace.vercel.app',
+    'https://paint-number-generator-nauv4mu1r-jm-personal-workspace.vercel.app'
 ]
 
 for url in vercel_urls:
@@ -97,7 +98,9 @@ def debug_cors():
         'cors_origins': cors_origins,
         'cors_origins_env': os.getenv('CORS_ORIGINS', 'NOT_SET'),
         'wildcard_enabled': True,
-        'timestamp': '2025-01-15T15:30:00Z'
+        'timestamp': '2025-01-15T16:50:00Z',
+        'current_request_origin': request.headers.get('Origin', 'No Origin Header'),
+        'force_deploy_v3': True
     }), 200
 
 @app.route('/api/upload', methods=['POST'])
