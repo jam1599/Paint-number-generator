@@ -22,7 +22,10 @@ app = Flask(__name__)
 
 # Get CORS origins from environment variable or use default
 cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001').split(',')
-CORS(app, origins=cors_origins)
+# Add explicit Vercel URL as fallback
+if 'https://paint-number-generator-sijv.vercel.app' not in cors_origins:
+    cors_origins.append('https://paint-number-generator-sijv.vercel.app')
+CORS(app, origins=cors_origins, supports_credentials=True)
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'

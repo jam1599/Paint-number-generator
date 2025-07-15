@@ -5,7 +5,7 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
     plan: free
-    autoDeploy: false
+    autoDeploy: true
     envVars:
       - key: FLASK_ENV
         value: production
