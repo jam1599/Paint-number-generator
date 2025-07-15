@@ -19,15 +19,16 @@ class PaintByNumbersProcessor:
     
     def __init__(self):
         self.temp_dir = tempfile.mkdtemp()
-        # Set maximum image size to reduce memory usage
-        self.max_image_size = (800, 600)  # Reduced from potential larger sizes
+        # Increase maximum image size for better quality/speed balance
+        self.max_image_size = (1200, 900)  # Increased for better quality
         
     def _resize_if_needed(self, image: np.ndarray) -> np.ndarray:
         """Resize image if it's too large to save memory."""
         h, w = image.shape[:2]
         max_w, max_h = self.max_image_size
         
-        if w > max_w or h > max_h:
+        # Only resize if image is significantly larger
+        if w > max_w * 1.5 or h > max_h * 1.5:
             # Calculate scaling factor
             scale = min(max_w / w, max_h / h)
             new_w = int(w * scale)
@@ -138,31 +139,44 @@ class PaintByNumbersProcessor:
         """
         # Reshape image for clustering
         original_shape = image.shape
-        data = image.reshape((-1, 3))
-        data = np.float32(data)
+        h, w = original_shape[:2]
+        total_pixels = h * w
         
-        # Sample data if image is too large (memory optimization)
-        if len(data) > 100000:  # If more than 100k pixels, sample
-            logger.info(f"Large image detected ({len(data)} pixels), sampling for clustering")
-            indices = np.random.choice(len(data), 100000, replace=False)
-            sampled_data = data[indices]
+        # Use much more aggressive sampling for speed
+        if total_pixels > 50000:  # Sample if more than 50k pixels
+            # Use adaptive sampling - smaller sample for larger images
+            if total_pixels > 500000:
+                sample_size = 20000  # Very large images
+            elif total_pixels > 200000:
+                sample_size = 40000  # Large images
+            else:
+                sample_size = min(50000, total_pixels // 2)  # Medium images
             
-            # Apply K-means clustering on sampled data
-            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-            _, _, centers = cv2.kmeans(sampled_data, num_colors, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+            logger.info(f"Sampling {sample_size} pixels from {total_pixels} for fast clustering")
             
-            # Clean up sampled data
+            # Flatten and sample
+            data = image.reshape((-1, 3))
+            indices = np.random.choice(len(data), sample_size, replace=False)
+            sampled_data = np.float32(data[indices])
+            
+            # Fast K-means with reduced iterations
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 5, 2.0)  # Reduced iterations
+            _, _, centers = cv2.kmeans(sampled_data, num_colors, None, criteria, 3, cv2.KMEANS_RANDOM_CENTERS)
+            
+            # Clean up
             del sampled_data, indices
             gc.collect()
             
-            # Apply centers to full data
-            distances = distance.cdist(data, centers)
-            labels = np.argmin(distances, axis=1)
-            del distances
+            # Fast assignment using broadcasting (faster than cdist)
+            data = np.float32(data)
+            labels = np.argmin(np.sum((data[:, None, :] - centers[None, :, :]) ** 2, axis=2), axis=1)
+            
         else:
-            # Apply K-means clustering on full data
-            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-            _, labels, centers = cv2.kmeans(data, num_colors, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+            # Small images - use full clustering but fast
+            data = image.reshape((-1, 3))
+            data = np.float32(data)
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 5, 2.0)
+            _, labels, centers = cv2.kmeans(data, num_colors, None, criteria, 3, cv2.KMEANS_RANDOM_CENTERS)
         
         # Convert back to uint8
         centers = np.uint8(centers)

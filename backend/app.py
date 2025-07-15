@@ -2,6 +2,7 @@ import os
 import shutil
 import psutil  # Add for memory monitoring
 import gc
+import time  # Add for performance monitoring
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -136,9 +137,17 @@ def debug_memory():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/upload', methods=['POST'])
+@app.route('/api/upload', methods=['POST', 'OPTIONS'])
 def upload_file():
     """Upload and process image file."""
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'preflight'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        return response
+    
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file part'}), 400
@@ -172,9 +181,17 @@ def upload_file():
         logger.error(f"Upload error: {str(e)}")
         return jsonify({'error': 'Upload failed'}), 500
 
-@app.route('/api/process', methods=['POST'])
+@app.route('/api/process', methods=['POST', 'OPTIONS'])
 def process_image():
     """Process uploaded image to generate paint-by-numbers."""
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'preflight'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        return response
+    
     try:
         data = request.get_json()
         
@@ -183,6 +200,10 @@ def process_image():
         
         file_id = data['file_id']
         settings = data.get('settings', {})
+        
+        # Start performance monitoring
+        start_time = time.time()
+        start_memory = get_memory_usage()
         
         # Default settings
         default_settings = {
@@ -232,6 +253,11 @@ def process_image():
         
         logger.info(f"Image processed: {file_id}")
         
+        # Calculate performance metrics
+        end_time = time.time()
+        processing_time = round(end_time - start_time, 2)
+        end_memory = get_memory_usage()
+        
         # Force garbage collection after processing to free memory
         gc.collect()
         
@@ -240,7 +266,12 @@ def process_image():
             'file_id': file_id,
             'output_files': result_files,
             'settings_used': process_settings,
-            'memory_usage': get_memory_usage()  # Include memory stats in response
+            'performance': {
+                'processing_time_seconds': processing_time,
+                'memory_before_mb': start_memory['rss_mb'],
+                'memory_after_mb': end_memory['rss_mb'],
+                'memory_used_mb': round(end_memory['rss_mb'] - start_memory['rss_mb'], 2)
+            }
         }), 200
         
     except Exception as e:
