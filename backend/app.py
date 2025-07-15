@@ -94,7 +94,9 @@ def debug_cors():
     """Debug endpoint to check CORS configuration."""
     return jsonify({
         'cors_origins': cors_origins,
-        'cors_origins_env': os.getenv('CORS_ORIGINS', 'NOT_SET')
+        'cors_origins_env': os.getenv('CORS_ORIGINS', 'NOT_SET'),
+        'wildcard_enabled': True,
+        'timestamp': '2025-01-15T15:30:00Z'
     }), 200
 
 @app.route('/api/upload', methods=['POST'])
