@@ -28,19 +28,20 @@ vercel_urls = [
     'https://paint-number-generator.vercel.app',
     'https://paint-number-generator-sijv.vercel.app',
     'https://paint-number-generator-git-main-jm-team.vercel.app',
-    'https://paint-number-generator-gbbmect08-jm-team.vercel.app'
+    'https://paint-number-generator-gbbmect08-jm-team.vercel.app',
+    'https://paint-number-generator-space.vercel.app'
 ]
 
 for url in vercel_urls:
     if url not in cors_origins:
         cors_origins.append(url)
 
-# Configure CORS with specific origins (more secure than wildcard)
+# Configure CORS with wildcard for all origins (temporary fix)
 CORS(app, 
-     origins=cors_origins,
+     origins="*",
      allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     supports_credentials=True)
+     supports_credentials=False)
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -54,6 +55,14 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+@app.after_request
+def after_request(response):
+    """Add CORS headers to all responses."""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 def allowed_file(filename: str) -> bool:
     """Check if the file extension is allowed."""
