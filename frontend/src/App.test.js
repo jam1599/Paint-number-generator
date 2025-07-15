@@ -1,24 +1,20 @@
 import React from 'react';
-import { Container, Typography, Paper, Box } from '@mui/material';
 
 function AppTest() {
   return (
-    <div className="App">
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Paper elevation={3} sx={{ p: 3, minHeight: '60vh' }}>
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h4" gutterBottom>
-              Paint by Numbers Generator - Test
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              This is a simplified test version to check if the app can render.
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
-              If you see this, the basic React app is working!
-            </Typography>
-          </Box>
-        </Paper>
-      </Container>
+    <div style={{ padding: '20px', backgroundColor: '#f0f0f0', minHeight: '100vh' }}>
+      <h1 style={{ color: 'blue', textAlign: 'center' }}>Paint by Numbers Generator - Basic Test</h1>
+      <p style={{ textAlign: 'center', fontSize: '18px' }}>
+        This is a super simple test without Material-UI.
+      </p>
+      <p style={{ textAlign: 'center', color: 'green' }}>
+        If you see this, basic React is working!
+      </p>
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <button style={{ padding: '10px 20px', fontSize: '16px' }}>
+          Test Button
+        </button>
+      </div>
     </div>
   );
 }
