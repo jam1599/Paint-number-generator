@@ -3,6 +3,6 @@
   "outputDirectory": "frontend/build",
   "installCommand": "cd frontend && npm install",
   "env": {
-    "REACT_APP_API_URL": "https://paint-number-generator-1.onrender.com/api"
+    "REACT_APP_API_URL": "https://paint-number-generator-1.onrender.com"
   }
 }
