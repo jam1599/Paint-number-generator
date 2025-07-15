@@ -201,21 +201,41 @@ def process_image():
         file_id = data['file_id']
         settings = data.get('settings', {})
         
+        # Detect mobile device from User-Agent
+        user_agent = request.headers.get('User-Agent', '').lower()
+        is_mobile = any(device in user_agent for device in [
+            'mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone'
+        ])
+        
         # Start performance monitoring
         start_time = time.time()
         start_memory = get_memory_usage()
         
-        # Default settings
-        default_settings = {
-            'num_colors': 15,
-            'blur_amount': 2,
-            'edge_threshold': 50,
-            'min_area': 50,
-            'output_format': 'svg'
-        }
+        # Mobile-optimized default settings
+        if is_mobile:
+            mobile_defaults = {
+                'num_colors': 10,      # Fewer colors for speed
+                'blur_amount': 1,      # Less blur processing
+                'edge_threshold': 75,  # Simpler edge detection
+                'min_area': 150,       # Larger minimum areas
+                'output_format': 'svg' # SVG is lighter
+            }
+        else:
+            mobile_defaults = {
+                'num_colors': 15,
+                'blur_amount': 2,
+                'edge_threshold': 50,
+                'min_area': 50,
+                'output_format': 'svg'
+            }
         
         # Merge with provided settings
-        process_settings = {**default_settings, **settings}
+        process_settings = {**mobile_defaults, **settings}
+        
+        # Add mobile flag to settings
+        process_settings['mobile_optimized'] = is_mobile
+        
+        logger.info(f"Processing for {'mobile' if is_mobile else 'desktop'} device with settings: {process_settings}")
         
         # Find input file
         input_file = None

@@ -9,6 +9,42 @@ import {
 } from '@mui/material';
 import { CloudUpload, Image } from '@mui/icons-material';
 
+// Mobile-optimized image compression utility
+const compressImageForMobile = (file, maxWidth = 800, maxHeight = 600, quality = 0.8) => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calculate new dimensions maintaining aspect ratio
+      let { width, height } = img;
+      
+      // Mobile optimization: smaller max size for better performance
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width *= ratio;
+        height *= ratio;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob(resolve, 'image/jpeg', quality);
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+// Detect if user is on mobile device
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 const ImageUpload = ({ onFileUpload, processing }) => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -35,7 +71,7 @@ const ImageUpload = ({ onFileUpload, processing }) => {
     }
   }, []);
 
-  const handleFileSelection = (file) => {
+  const handleFileSelection = async (file) => {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {
@@ -43,21 +79,46 @@ const ImageUpload = ({ onFileUpload, processing }) => {
       return;
     }
 
+    // Mobile optimization: compress large images
+    let processedFile = file;
+    const isMobile = isMobileDevice();
+    const fileSizeInMB = file.size / (1024 * 1024);
+    
+    // Compress if mobile device or file is large
+    if (isMobile || fileSizeInMB > 2) {
+      console.log(`Mobile optimization: Original file size: ${fileSizeInMB.toFixed(2)}MB`);
+      
+      try {
+        processedFile = await compressImageForMobile(
+          file, 
+          isMobile ? 600 : 800,  // Smaller size for mobile
+          isMobile ? 450 : 600,  // Smaller size for mobile
+          isMobile ? 0.7 : 0.8   // More compression for mobile
+        );
+        
+        const newSizeInMB = processedFile.size / (1024 * 1024);
+        console.log(`Mobile optimization: Compressed to: ${newSizeInMB.toFixed(2)}MB`);
+      } catch (error) {
+        console.error('Compression failed, using original file:', error);
+        processedFile = file;
+      }
+    }
+
     // Validate file size (16MB max)
     const maxSize = 16 * 1024 * 1024;
-    if (file.size > maxSize) {
+    if (processedFile.size > maxSize) {
       alert('File size must be less than 16MB');
       return;
     }
 
-    setSelectedFile(file);
+    setSelectedFile(processedFile);  // Use processed file
     
-    // Create preview
+    // Create preview from original file for better quality display
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreview(e.target.result);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(file);  // Preview original, upload compressed
   };
 
   const handleFileInput = (e) => {
@@ -69,7 +130,12 @@ const ImageUpload = ({ onFileUpload, processing }) => {
 
   const handleUpload = () => {
     if (selectedFile) {
-      onFileUpload(selectedFile);
+      // Compress image if on mobile
+      const uploadFile = isMobileDevice() ? compressImageForMobile(selectedFile) : Promise.resolve(selectedFile);
+      
+      uploadFile.then((fileToUpload) => {
+        onFileUpload(fileToUpload);
+      });
     }
   };
 

@@ -13,8 +13,54 @@ import {
   Card,
   CardContent,
   Chip,
+  ButtonGroup,
 } from '@mui/material';
-import { Settings, PlayArrow } from '@mui/icons-material';
+import { Settings, PlayArrow, Speed, HighQuality, PhoneAndroid } from '@mui/icons-material';
+
+// Mobile performance presets
+const MOBILE_PRESETS = {
+  fast: {
+    name: 'Fast (Mobile)',
+    icon: <Speed />,
+    settings: {
+      num_colors: 8,
+      blur_amount: 1,
+      edge_threshold: 75,
+      min_area: 200,
+      output_format: 'svg'
+    },
+    description: 'Quick processing for mobile devices'
+  },
+  balanced: {
+    name: 'Balanced',
+    icon: <PhoneAndroid />,
+    settings: {
+      num_colors: 12,
+      blur_amount: 2,
+      edge_threshold: 50,
+      min_area: 100,
+      output_format: 'svg'
+    },
+    description: 'Good balance of speed and quality'
+  },
+  quality: {
+    name: 'High Quality',
+    icon: <HighQuality />,
+    settings: {
+      num_colors: 20,
+      blur_amount: 3,
+      edge_threshold: 25,
+      min_area: 50,
+      output_format: 'svg'
+    },
+    description: 'Best quality, slower processing'
+  }
+};
+
+// Detect mobile device
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
 
 const ProcessingSettings = ({ 
   settings, 
@@ -33,6 +79,10 @@ const ProcessingSettings = ({
     onSettingsChange(defaultSettings);
   };
 
+  const applyPreset = (preset) => {
+    onSettingsChange(MOBILE_PRESETS[preset].settings);
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -43,6 +93,31 @@ const ProcessingSettings = ({
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         Adjust these settings to customize your paint-by-numbers template.
       </Typography>
+
+      {/* Mobile Performance Presets */}
+      {isMobileDevice() && (
+        <Paper sx={{ p: 2, mb: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PhoneAndroid />
+            Mobile Optimized Presets
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Choose a preset optimized for mobile performance:
+          </Typography>
+          <ButtonGroup fullWidth variant="contained" size="small">
+            {Object.entries(MOBILE_PRESETS).map(([key, preset]) => (
+              <Button
+                key={key}
+                onClick={() => applyPreset(key)}
+                startIcon={preset.icon}
+                sx={{ flexDirection: 'column', py: 1 }}
+              >
+                <Typography variant="caption">{preset.name}</Typography>
+              </Button>
+            ))}
+          </ButtonGroup>
+        </Paper>
+      )}
 
       {uploadedFile && (
         <Card sx={{ mb: 3 }}>
@@ -180,6 +255,34 @@ const ProcessingSettings = ({
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Mobile Presets Section */}
+      {isMobileDevice() && (
+        <Paper elevation={2} sx={{ p: 3, mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Performance Presets
+          </Typography>
+          <ButtonGroup variant="outlined" fullWidth>
+            {Object.keys(MOBILE_PRESETS).map(key => (
+              <Button 
+                key={key} 
+                onClick={() => applyPreset(key)} 
+                sx={{ 
+                  flex: 1, 
+                  borderColor: settings.num_colors === MOBILE_PRESETS[key].settings.num_colors ? 'primary.main' : undefined,
+                  color: settings.num_colors === MOBILE_PRESETS[key].settings.num_colors ? 'primary.main' : undefined
+                }}
+              >
+                {MOBILE_PRESETS[key].icon}
+                {MOBILE_PRESETS[key].name}
+              </Button>
+            ))}
+          </ButtonGroup>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            {MOBILE_PRESETS[Object.keys(MOBILE_PRESETS)[0]].description}
+          </Typography>
+        </Paper>
+      )}
 
       <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center' }}>
         <Button

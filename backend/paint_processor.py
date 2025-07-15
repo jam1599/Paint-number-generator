@@ -19,22 +19,22 @@ class PaintByNumbersProcessor:
     
     def __init__(self):
         self.temp_dir = tempfile.mkdtemp()
-        # Increase maximum image size for better quality/speed balance
-        self.max_image_size = (1200, 900)  # Increased for better quality
+        # EMERGENCY: Much smaller size to prevent memory crashes
+        self.max_image_size = (600, 450)  # Reduced from 1200x900
         
     def _resize_if_needed(self, image: np.ndarray) -> np.ndarray:
         """Resize image if it's too large to save memory."""
         h, w = image.shape[:2]
         max_w, max_h = self.max_image_size
         
-        # Only resize if image is significantly larger
-        if w > max_w * 1.5 or h > max_h * 1.5:
+        # EMERGENCY: Always resize if larger than limit
+        if w > max_w or h > max_h:
             # Calculate scaling factor
             scale = min(max_w / w, max_h / h)
             new_w = int(w * scale)
             new_h = int(h * scale)
             
-            logger.info(f"Resizing image from {w}x{h} to {new_w}x{new_h}")
+            logger.info(f"EMERGENCY RESIZE: {w}x{h} to {new_w}x{new_h}")
             resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
             
             # Force garbage collection
@@ -66,6 +66,9 @@ class PaintByNumbersProcessor:
             logger.info(f"Processing image: {input_path}")
             logger.info(f"Settings: {settings}")
             
+            # Mobile-specific optimizations
+            is_mobile = settings.get('mobile_optimized', False)
+            
             # Load and prepare image
             image = cv2.imread(input_path)
             if image is None:
@@ -76,23 +79,30 @@ class PaintByNumbersProcessor:
             # Convert BGR to RGB
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             
+            # Mobile optimization: more aggressive resizing
+            if is_mobile:
+                self.max_image_size = (500, 375)  # Even smaller for mobile
+                logger.info("Mobile optimization: Using smaller image size")
+            
             # Resize if too large to save memory
             image = self._resize_if_needed(image)
             logger.info(f"After resize check. Shape: {image.shape}")
             
-            # Apply blur if specified
+            # Apply blur if specified (reduced for mobile)
             blur_amount = settings.get('blur_amount', 0)
             if blur_amount > 0:
+                if is_mobile and blur_amount > 2:
+                    blur_amount = 2  # Limit blur for mobile performance
                 kernel_size = blur_amount * 2 + 1
                 image = cv2.GaussianBlur(image, (kernel_size, kernel_size), 0)
                 logger.info(f"Applied blur with kernel size: {kernel_size}")
             
-            # Reduce colors
+            # Reduce colors (with mobile optimization)
             num_colors = settings.get('num_colors', 15)
             logger.info(f"Reducing colors to {num_colors}")
-            reduced_image, color_palette = self.reduce_colors(image, num_colors)
+            reduced_image, color_palette = self.reduce_colors(image, num_colors, is_mobile)
             
-            # Create regions
+            # Create regions (simplified for mobile)
             logger.info("Creating regions...")
             regions = self.create_regions(reduced_image, settings)
             
@@ -126,13 +136,14 @@ class PaintByNumbersProcessor:
             logger.error(f"Traceback: {traceback.format_exc()}")
             raise
     
-    def reduce_colors(self, image: np.ndarray, num_colors: int) -> Tuple[np.ndarray, List[Tuple[int, int, int]]]:
+    def reduce_colors(self, image: np.ndarray, num_colors: int, mobile_optimized: bool = False) -> Tuple[np.ndarray, List[Tuple[int, int, int]]]:
         """
-        Reduce image colors using K-means clustering with memory optimization.
+        Reduce image colors using K-means clustering with mobile optimization.
         
         Args:
             image: Input image array
             num_colors: Number of colors to reduce to
+            mobile_optimized: Whether to use mobile-specific optimizations
             
         Returns:
             Reduced image and color palette
@@ -142,41 +153,57 @@ class PaintByNumbersProcessor:
         h, w = original_shape[:2]
         total_pixels = h * w
         
-        # Use much more aggressive sampling for speed
-        if total_pixels > 50000:  # Sample if more than 50k pixels
-            # Use adaptive sampling - smaller sample for larger images
-            if total_pixels > 500000:
-                sample_size = 20000  # Very large images
-            elif total_pixels > 200000:
-                sample_size = 40000  # Large images
+        # Mobile-specific ultra-aggressive sampling
+        if mobile_optimized:
+            threshold = 15000  # Much smaller threshold for mobile
+            max_sample = 10000  # Smaller max sample for mobile
+        else:
+            threshold = 25000
+            max_sample = 15000
+        
+        # Use ultra-aggressive sampling for memory safety
+        if total_pixels > threshold:
+            # Mobile gets even smaller samples
+            if mobile_optimized:
+                if total_pixels > 100000:
+                    sample_size = 8000   # Ultra-small for mobile large images
+                elif total_pixels > 50000:
+                    sample_size = 10000  # Small for mobile medium images
+                else:
+                    sample_size = min(12000, total_pixels // 2)
             else:
-                sample_size = min(50000, total_pixels // 2)  # Medium images
+                if total_pixels > 200000:
+                    sample_size = max_sample
+                elif total_pixels > 100000:
+                    sample_size = 20000
+                else:
+                    sample_size = min(25000, total_pixels // 3)
             
-            logger.info(f"Sampling {sample_size} pixels from {total_pixels} for fast clustering")
+            logger.info(f"{'MOBILE' if mobile_optimized else 'STANDARD'} SAMPLING: {sample_size} pixels from {total_pixels}")
             
             # Flatten and sample
             data = image.reshape((-1, 3))
             indices = np.random.choice(len(data), sample_size, replace=False)
             sampled_data = np.float32(data[indices])
             
-            # Fast K-means with reduced iterations
-            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 5, 2.0)  # Reduced iterations
-            _, _, centers = cv2.kmeans(sampled_data, num_colors, None, criteria, 3, cv2.KMEANS_RANDOM_CENTERS)
+            # Ultra-fast K-means with minimal iterations
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 3, 3.0)  # Only 3 iterations
+            _, _, centers = cv2.kmeans(sampled_data, num_colors, None, criteria, 2, cv2.KMEANS_RANDOM_CENTERS)
             
-            # Clean up
+            # Clean up immediately
             del sampled_data, indices
             gc.collect()
             
-            # Fast assignment using broadcasting (faster than cdist)
+            # Fast assignment
             data = np.float32(data)
             labels = np.argmin(np.sum((data[:, None, :] - centers[None, :, :]) ** 2, axis=2), axis=1)
             
         else:
-            # Small images - use full clustering but fast
+            # Very small images - minimal processing
             data = image.reshape((-1, 3))
             data = np.float32(data)
-            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 5, 2.0)
-            _, labels, centers = cv2.kmeans(data, num_colors, None, criteria, 3, cv2.KMEANS_RANDOM_CENTERS)
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 3, 3.0)
+            _, labels, centers = cv2.kmeans(data, num_colors, None, criteria, 2, cv2.KMEANS_RANDOM_CENTERS)
         
         # Convert back to uint8
         centers = np.uint8(centers)
