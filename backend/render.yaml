@@ -10,7 +10,7 @@ services:
       - key: FLASK_ENV
         value: production
       - key: CORS_ORIGINS
-        value: https://paint-number-generator.vercel.app,https://paint-number-generator-sijv.vercel.app,https://paint-number-generator-56al.vercel.app,http://localhost:3000,http://localhost:3001
+        value: https://paint-number-generator.vercel.app,https://paint-number-generator-sijv.vercel.app,https://paint-number-generator-56al.vercel.app,https://paint-number-generator-git-main-jm-team.vercel.app,https://paint-number-generator-gbbmect08-jm-team.vercel.app,https://paint-number-generator-space.vercel.app,https://paint-number-generator-git-main-jm-personal-workspace.vercel.app,http://localhost:3000,http://localhost:3001
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: PORT
