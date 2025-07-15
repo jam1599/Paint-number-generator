@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -41,9 +41,9 @@ function App() {
     
     // Then try to load settings
     loadDefaultSettings();
-  }, []);
+  }, [loadDefaultSettings]);
 
-  const loadDefaultSettings = async () => {
+  const loadDefaultSettings = useCallback(async () => {
     try {
       console.log('Loading default settings...');
       console.log('API URL:', process.env.REACT_APP_API_URL);
@@ -82,7 +82,7 @@ function App() {
       setSettings(fallbackSettings);
       setError('Using offline mode - API connection failed. Upload and processing features will not work until backend is connected.');
     }
-  };
+  }, [error]);
 
   const handleFileUpload = async (file) => {
     try {
