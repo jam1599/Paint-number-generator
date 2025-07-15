@@ -17,6 +17,6 @@
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://your-backend-domain.onrender.com"
+    "REACT_APP_API_URL": "https://paint-number-generator-1.onrender.com"
   }
 }
