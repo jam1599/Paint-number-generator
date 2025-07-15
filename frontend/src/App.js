@@ -37,12 +37,20 @@ function App() {
   const loadDefaultSettings = async () => {
     try {
       console.log('Loading default settings...');
+      console.log('API URL:', process.env.REACT_APP_API_URL);
+      
       const response = await apiService.getDefaultSettings();
       console.log('Default settings loaded:', response.data);
       setDefaultSettings(response.data);
       setSettings(response.data);
     } catch (error) {
       console.error('Error loading default settings:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+      
       // Use fallback default settings if API fails
       const fallbackSettings = {
         num_colors: 15,
@@ -58,7 +66,7 @@ function App() {
       console.log('Using fallback settings:', fallbackSettings);
       setDefaultSettings(fallbackSettings);
       setSettings(fallbackSettings);
-      setError('Using offline mode - some features may be limited');
+      setError('Using offline mode - API connection failed. Some features may be limited.');
     } finally {
       setIsInitialized(true);
     }
@@ -68,14 +76,18 @@ function App() {
     try {
       setError(null);
       setProcessing(true);
+      console.log('Uploading file:', file.name);
       
       const response = await apiService.uploadFile(file);
+      console.log('File uploaded successfully:', response.data);
+      
       setUploadedFile(file);
-      setFileId(response.data.file_id);
+      setFileId(response.data.file_id || response.data.id);
       setCurrentStep('settings');
     } catch (error) {
       console.error('Upload error:', error);
-      setError('Failed to upload file. Please try again.');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to upload file';
+      setError(`Upload failed: ${errorMessage}. Please try again.`);
     } finally {
       setProcessing(false);
     }
@@ -90,13 +102,17 @@ function App() {
       setError(null);
       setProcessing(true);
       setCurrentStep('processing');
+      console.log('Processing image with settings:', settings);
       
       const response = await apiService.processImage(fileId, settings);
+      console.log('Image processed successfully:', response.data);
+      
       setResults(response.data);
       setCurrentStep('results');
     } catch (error) {
       console.error('Processing error:', error);
-      setError('Failed to process image. Please try again.');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to process image';
+      setError(`Processing failed: ${errorMessage}. Please try again.`);
       setCurrentStep('settings');
     } finally {
       setProcessing(false);
