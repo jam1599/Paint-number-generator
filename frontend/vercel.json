@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://paint-number-generator-1.onrender.com/api"
+  }
+}
