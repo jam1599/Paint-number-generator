@@ -24,9 +24,11 @@ app = Flask(__name__)
 cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001').split(',')
 # Add explicit Vercel URLs as fallback
 vercel_urls = [
-    'https://paint-number-generator-sijv.vercel.app',
-    'https://paint-number-generator.vercel.app'
+    'https://paint-number-generator.vercel.app',
+    'https://paint-number-generator-git-main-jm-team.vercel.app',
+    'https://paint-number-generator-gbbmect08-jm-team.vercel.app'
 ]
+
 for url in vercel_urls:
     if url not in cors_origins:
         cors_origins.append(url)
