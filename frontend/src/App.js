@@ -31,6 +31,15 @@ function App() {
   useEffect(() => {
     // Load default settings on component mount
     console.log('App component mounted');
+    console.log('Environment:', {
+      NODE_ENV: process.env.NODE_ENV,
+      API_URL: process.env.REACT_APP_API_URL
+    });
+    
+    // Set initialized to true immediately so UI shows
+    setIsInitialized(true);
+    
+    // Then try to load settings
     loadDefaultSettings();
   }, []);
 
@@ -43,6 +52,11 @@ function App() {
       console.log('Default settings loaded:', response.data);
       setDefaultSettings(response.data);
       setSettings(response.data);
+      
+      // Clear any previous errors if API works
+      if (error && error.includes('offline mode')) {
+        setError(null);
+      }
     } catch (error) {
       console.error('Error loading default settings:', error);
       console.error('Error details:', {
@@ -66,9 +80,7 @@ function App() {
       console.log('Using fallback settings:', fallbackSettings);
       setDefaultSettings(fallbackSettings);
       setSettings(fallbackSettings);
-      setError('Using offline mode - API connection failed. Some features may be limited.');
-    } finally {
-      setIsInitialized(true);
+      setError('Using offline mode - API connection failed. Upload and processing features will not work until backend is connected.');
     }
   };
 
@@ -200,6 +212,9 @@ function App() {
           <Paper elevation={3} sx={{ p: 3, minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h6">Loading Paint by Numbers Generator...</Typography>
+              <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                Please wait while we initialize the application.
+              </Typography>
             </Box>
           </Paper>
         </Container>
@@ -228,7 +243,7 @@ function App() {
 
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
             {error && (
-              <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+              <Alert severity="warning" sx={{ mb: 3 }} onClose={() => setError(null)}>
                 {error}
               </Alert>
             )}
