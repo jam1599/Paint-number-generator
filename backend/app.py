@@ -22,9 +22,11 @@ app = Flask(__name__)
 
 # Get CORS origins from environment variable or use default
 cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001').split(',')
+
 # Add explicit Vercel URLs as fallback
 vercel_urls = [
     'https://paint-number-generator.vercel.app',
+    'https://paint-number-generator-sijv.vercel.app',
     'https://paint-number-generator-git-main-jm-team.vercel.app',
     'https://paint-number-generator-gbbmect08-jm-team.vercel.app'
 ]
@@ -33,12 +35,12 @@ for url in vercel_urls:
     if url not in cors_origins:
         cors_origins.append(url)
 
-# Configure CORS with more comprehensive settings
+# Configure CORS with specific origins (more secure than wildcard)
 CORS(app, 
-     origins=cors_origins, 
-     supports_credentials=True,
-     allow_headers=['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+     origins=cors_origins,
+     allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     supports_credentials=True)
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -57,13 +59,6 @@ def allowed_file(filename: str) -> bool:
     """Check if the file extension is allowed."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def add_cors_headers(response):
-    """Add CORS headers to response"""
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
-    return response
 
 @app.route('/')
 def index():
@@ -216,18 +211,10 @@ def download_file(file_id: str, file_type: str):
         logger.error(f"Download error: {str(e)}")
         return jsonify({'error': 'Download failed'}), 500
 
-@app.route('/api/settings', methods=['GET', 'OPTIONS'])
+@app.route('/api/settings', methods=['GET'])
 def get_default_settings():
     """Get default processing settings."""
-    if request.method == 'OPTIONS':
-        # Handle preflight request
-        response = app.make_default_options_response()
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
-        return response
-    
-    response = jsonify({
+    return jsonify({
         'num_colors': 15,
         'blur_amount': 2,
         'edge_threshold': 50,
@@ -237,11 +224,7 @@ def get_default_settings():
         'blur_options': [0, 1, 2, 3, 4, 5],
         'edge_options': [10, 25, 50, 75, 100],
         'area_options': [50, 100, 200, 500, 1000]
-    })
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With'
-    return response, 200
+    }), 200
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
