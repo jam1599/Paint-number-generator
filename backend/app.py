@@ -62,6 +62,14 @@ def health_check():
     """Health check endpoint."""
     return jsonify({'status': 'healthy'}), 200
 
+@app.route('/api/debug/cors', methods=['GET'])
+def debug_cors():
+    """Debug endpoint to check CORS configuration."""
+    return jsonify({
+        'cors_origins': cors_origins,
+        'cors_origins_env': os.getenv('CORS_ORIGINS', 'NOT_SET')
+    }), 200
+
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     """Upload and process image file."""
