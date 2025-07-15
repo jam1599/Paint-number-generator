@@ -28,21 +28,6 @@ function App() {
   const [error, setError] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    // Load default settings on component mount
-    console.log('App component mounted');
-    console.log('Environment:', {
-      NODE_ENV: process.env.NODE_ENV,
-      API_URL: process.env.REACT_APP_API_URL
-    });
-    
-    // Set initialized to true immediately so UI shows
-    setIsInitialized(true);
-    
-    // Then try to load settings
-    loadDefaultSettings();
-  }, [loadDefaultSettings]);
-
   const loadDefaultSettings = useCallback(async () => {
     try {
       console.log('Loading default settings...');
@@ -83,6 +68,21 @@ function App() {
       setError('Using offline mode - API connection failed. Upload and processing features will not work until backend is connected.');
     }
   }, [error]);
+
+  useEffect(() => {
+    // Load default settings on component mount
+    console.log('App component mounted');
+    console.log('Environment:', {
+      NODE_ENV: process.env.NODE_ENV,
+      API_URL: process.env.REACT_APP_API_URL
+    });
+    
+    // Set initialized to true immediately so UI shows
+    setIsInitialized(true);
+    
+    // Then try to load settings
+    loadDefaultSettings();
+  }, [loadDefaultSettings]);
 
   const handleFileUpload = async (file) => {
     try {
