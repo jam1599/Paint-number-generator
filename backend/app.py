@@ -29,7 +29,8 @@ vercel_urls = [
     'https://paint-number-generator-sijv.vercel.app',
     'https://paint-number-generator-git-main-jm-team.vercel.app',
     'https://paint-number-generator-gbbmect08-jm-team.vercel.app',
-    'https://paint-number-generator-space.vercel.app'
+    'https://paint-number-generator-space.vercel.app',
+    'https://paint-number-generator-git-main-jm-personal-workspace.vercel.app'
 ]
 
 for url in vercel_urls:
