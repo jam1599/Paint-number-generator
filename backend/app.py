@@ -111,9 +111,11 @@ def debug_cors():
         'cors_origins': cors_origins,
         'cors_origins_env': os.getenv('CORS_ORIGINS', 'NOT_SET'),
         'wildcard_enabled': True,
-        'timestamp': '2025-01-15T16:50:00Z',
+        'timestamp': '2025-01-16T14:30:00Z',  # Updated timestamp
         'current_request_origin': request.headers.get('Origin', 'No Origin Header'),
-        'force_deploy_v3': True
+        'force_deploy_v4': True,  # New version flag
+        'memory_optimization': 'active',
+        'deployment_status': 'checking_cors_v4'
     }), 200
 
 @app.route('/api/debug/memory', methods=['GET'])
