@@ -1,5 +1,7 @@
 import os
 import shutil
+import psutil  # Add for memory monitoring
+import gc
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -19,6 +21,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Memory monitoring function
+def get_memory_usage():
+    """Get current memory usage."""
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    return {
+        'rss_mb': round(memory_info.rss / 1024 / 1024, 2),  # Resident Set Size in MB
+        'vms_mb': round(memory_info.vms / 1024 / 1024, 2),  # Virtual Memory Size in MB
+        'percent': round(process.memory_percent(), 2)
+    }
 
 # Get CORS origins from environment variable or use default
 cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001').split(',')
@@ -102,6 +115,24 @@ def debug_cors():
         'current_request_origin': request.headers.get('Origin', 'No Origin Header'),
         'force_deploy_v3': True
     }), 200
+
+@app.route('/api/debug/memory', methods=['GET'])
+def debug_memory():
+    """Debug endpoint to check memory usage."""
+    try:
+        memory_stats = get_memory_usage()
+        # Force garbage collection
+        gc.collect()
+        memory_after_gc = get_memory_usage()
+        
+        return jsonify({
+            'memory_before_gc': memory_stats,
+            'memory_after_gc': memory_after_gc,
+            'memory_saved_mb': round(memory_stats['rss_mb'] - memory_after_gc['rss_mb'], 2),
+            'timestamp': '2025-01-16T12:00:00Z'
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
@@ -199,11 +230,15 @@ def process_image():
         
         logger.info(f"Image processed: {file_id}")
         
+        # Force garbage collection after processing to free memory
+        gc.collect()
+        
         return jsonify({
             'message': 'Image processed successfully',
             'file_id': file_id,
             'output_files': result_files,
-            'settings_used': process_settings
+            'settings_used': process_settings,
+            'memory_usage': get_memory_usage()  # Include memory stats in response
         }), 200
         
     except Exception as e:

@@ -8,6 +8,7 @@ from skimage.morphology import disk
 from scipy.spatial import distance
 import os
 import tempfile
+import gc  # Add garbage collection
 from typing import Dict, List, Tuple, Optional, Any
 import logging
 
@@ -18,6 +19,36 @@ class PaintByNumbersProcessor:
     
     def __init__(self):
         self.temp_dir = tempfile.mkdtemp()
+        # Set maximum image size to reduce memory usage
+        self.max_image_size = (800, 600)  # Reduced from potential larger sizes
+        
+    def _resize_if_needed(self, image: np.ndarray) -> np.ndarray:
+        """Resize image if it's too large to save memory."""
+        h, w = image.shape[:2]
+        max_w, max_h = self.max_image_size
+        
+        if w > max_w or h > max_h:
+            # Calculate scaling factor
+            scale = min(max_w / w, max_h / h)
+            new_w = int(w * scale)
+            new_h = int(h * scale)
+            
+            logger.info(f"Resizing image from {w}x{h} to {new_w}x{new_h}")
+            resized = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            
+            # Force garbage collection
+            del image
+            gc.collect()
+            
+            return resized
+        return image
+        
+    def _cleanup_memory(self, *arrays):
+        """Clean up memory by deleting arrays and forcing garbage collection."""
+        for arr in arrays:
+            if arr is not None:
+                del arr
+        gc.collect()
         
     def process_image(self, input_path: str, settings: Dict[str, Any]) -> Dict[str, str]:
         """
@@ -43,6 +74,10 @@ class PaintByNumbersProcessor:
             
             # Convert BGR to RGB
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            
+            # Resize if too large to save memory
+            image = self._resize_if_needed(image)
+            logger.info(f"After resize check. Shape: {image.shape}")
             
             # Apply blur if specified
             blur_amount = settings.get('blur_amount', 0)
@@ -92,7 +127,7 @@ class PaintByNumbersProcessor:
     
     def reduce_colors(self, image: np.ndarray, num_colors: int) -> Tuple[np.ndarray, List[Tuple[int, int, int]]]:
         """
-        Reduce image colors using K-means clustering.
+        Reduce image colors using K-means clustering with memory optimization.
         
         Args:
             image: Input image array
@@ -102,22 +137,45 @@ class PaintByNumbersProcessor:
             Reduced image and color palette
         """
         # Reshape image for clustering
+        original_shape = image.shape
         data = image.reshape((-1, 3))
         data = np.float32(data)
         
-        # Apply K-means clustering
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
-        _, labels, centers = cv2.kmeans(data, num_colors, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+        # Sample data if image is too large (memory optimization)
+        if len(data) > 100000:  # If more than 100k pixels, sample
+            logger.info(f"Large image detected ({len(data)} pixels), sampling for clustering")
+            indices = np.random.choice(len(data), 100000, replace=False)
+            sampled_data = data[indices]
+            
+            # Apply K-means clustering on sampled data
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+            _, _, centers = cv2.kmeans(sampled_data, num_colors, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+            
+            # Clean up sampled data
+            del sampled_data, indices
+            gc.collect()
+            
+            # Apply centers to full data
+            distances = distance.cdist(data, centers)
+            labels = np.argmin(distances, axis=1)
+            del distances
+        else:
+            # Apply K-means clustering on full data
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+            _, labels, centers = cv2.kmeans(data, num_colors, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
         
         # Convert back to uint8
         centers = np.uint8(centers)
         
         # Create reduced image
         reduced_data = centers[labels.flatten()]
-        reduced_image = reduced_data.reshape(image.shape)
+        reduced_image = reduced_data.reshape(original_shape)
         
         # Create color palette
         color_palette = [(int(c[0]), int(c[1]), int(c[2])) for c in centers]
+        
+        # Clean up memory
+        self._cleanup_memory(data, reduced_data, labels)
         
         return reduced_image, color_palette
     
