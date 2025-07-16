@@ -34,55 +34,48 @@ def get_memory_usage():
         'percent': round(process.memory_percent(), 2)
     }
 
-# Get CORS origins from environment variable or use default
-cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001').split(',')
-
-# Add explicit Vercel URLs as fallback
-vercel_urls = [
-    'https://paint-number-generator.vercel.app',
-    'https://paint-number-generator-sijv.vercel.app',
-    'https://paint-number-generator-git-main-jm-team.vercel.app',
-    'https://paint-number-generator-gbbmect08-jm-team.vercel.app',
-    'https://paint-number-generator-space.vercel.app',
-    'https://paint-number-generator-git-main-jm-personal-workspace.vercel.app',
-    'https://paint-number-generator-nauv4mu1r-jm-personal-workspace.vercel.app'
+# Define allowed origins
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://paint-number-generator.vercel.app",
+    "https://paint-number-generator-1.onrender.com",
+    "https://paint-number-generator.onrender.com"
 ]
 
-for url in vercel_urls:
-    if url not in cors_origins:
-        cors_origins.append(url)
+# Configure CORS
+CORS(app, resources={
+    r"/*": {
+        "origins": ALLOWED_ORIGINS,
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": [
+            "Content-Type",
+            "Authorization",
+            "Accept",
+            "Origin",
+            "X-Requested-With",
+            "X-Device-Type",
+            "x-device-type"
+        ],
+        "expose_headers": [
+            "Content-Type",
+            "Authorization"
+        ],
+        "supports_credentials": True,
+        "max_age": 3600
+    }
+})
 
-# Configure CORS for production and development
-CORS(app, 
-     resources={
-         r"/*": {
-             "origins": [
-                 "http://localhost:3000",
-                 "http://127.0.0.1:3000",
-                 "https://paint-number-generator.vercel.app",
-                 "https://paint-number-generator-1.onrender.com",
-                 "https://paint-number-generator.onrender.com"
-             ],
-             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": [
-                 "Content-Type",
-                 "Authorization",
-                 "Accept",
-                 "Origin",
-                 "X-Requested-With",
-                 "X-Device-Type",
-                 "x-device-type",
-                 "Access-Control-Allow-Origin",
-                 "Access-Control-Allow-Headers"
-             ],
-             "expose_headers": [
-                 "Content-Type",
-                 "Authorization"
-             ],
-             "supports_credentials": True,
-             "send_wildcard": False
-         }
-     })
+@app.after_request
+def after_request(response):
+    origin = request.headers.get('Origin')
+    if origin in ALLOWED_ORIGINS:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With, X-Device-Type, x-device-type'
+    response.headers['Access-Control-Max-Age'] = '3600'
+    response.headers['Vary'] = 'Origin'
+    return response
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -152,14 +145,12 @@ def health_check():
 def debug_cors():
     """Debug endpoint to check CORS configuration."""
     return jsonify({
-        'cors_origins': cors_origins,
-        'cors_origins_env': os.getenv('CORS_ORIGINS', 'NOT_SET'),
-        'wildcard_enabled': True,
-        'timestamp': '2025-01-16T14:30:00Z',  # Updated timestamp
+        'allowed_origins': ALLOWED_ORIGINS,
         'current_request_origin': request.headers.get('Origin', 'No Origin Header'),
-        'force_deploy_v4': True,  # New version flag
+        'cors_enabled': True,
+        'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
         'memory_optimization': 'active',
-        'deployment_status': 'checking_cors_v4'
+        'deployment_status': 'cors_v5'
     }), 200
 
 @app.route('/api/debug/memory', methods=['GET'])
