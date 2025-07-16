@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -14,6 +14,8 @@ import {
 import { Download, Refresh, CheckCircle } from '@mui/icons-material';
 
 const ResultsDisplay = ({ results, onDownload, onReset }) => {
+  const [imageError, setImageError] = useState(false);
+
   if (!results) {
     return (
       <Alert severity="error">
@@ -22,7 +24,8 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
     );
   }
 
-  const { file_id, output_files, settings_used } = results;
+  const { file_id, settings_used } = results;
+  const apiUrl = process.env.REACT_APP_API_URL || '';
 
   const fileDescriptions = {
     template: {
@@ -40,6 +43,31 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
       description: 'The final colored result',
       icon: '✨',
     },
+  };
+
+  const handleDownload = async (filename) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/download/${filename}`);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download the file. Please try again.');
+    }
+  };
+
+  const handleImageError = () => {
+    console.error('Image failed to load');
+    setImageError(true);
   };
 
   return (
@@ -64,18 +92,26 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
             p: 2,
             maxWidth: '100%',
             overflow: 'hidden',
-            '& img': {
-              maxWidth: '100%',
-              height: 'auto',
-              borderRadius: '4px'
-            }
           }}
         >
-          <img 
-            src={`${process.env.REACT_APP_API_URL}/api/download/${file_id}_template.png`}
-            alt="Paint by Numbers Template"
-            style={{ maxWidth: '100%', height: 'auto' }}
-          />
+          {!imageError ? (
+            <img 
+              src={`${apiUrl}/api/download/${file_id}_template.png`}
+              alt="Paint by Numbers Template"
+              onError={handleImageError}
+              style={{ 
+                maxWidth: '100%', 
+                height: 'auto',
+                borderRadius: '4px',
+                display: 'block',
+                margin: '0 auto'
+              }}
+            />
+          ) : (
+            <Alert severity="error">
+              Failed to load preview image. Don't worry - you can still download the files below.
+            </Alert>
+          )}
         </Paper>
       </Box>
 
@@ -102,7 +138,7 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
                   variant="contained"
                   color="primary"
                   startIcon={<Download />}
-                  onClick={() => onDownload(`${file_id}_${fileType}.png`)}
+                  onClick={() => handleDownload(`${file_id}_${fileType}.png`)}
                 >
                   DOWNLOAD
                 </Button>
