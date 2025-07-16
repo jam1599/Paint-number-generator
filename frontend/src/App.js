@@ -142,7 +142,10 @@ function App() {
 
   const handleProcessImage = async () => {
     try {
+      // Clear any existing error state
       setError(null);
+      
+      // Set processing state immediately
       setProcessing(true);
       setCurrentStep('processing');
       setProgress(0);
@@ -151,13 +154,14 @@ function App() {
       
       // Get device capabilities
       const capabilities = getDeviceCapabilities();
+      const isMobile = capabilities.isMobile;
       
-      // Optimize settings based on device capabilities
+      // Mobile-optimized settings with reduced memory usage
       const processSettings = {
         ...settings,
-        mobile_optimized: capabilities.isMobile,
+        mobile_optimized: isMobile,
         device_info: {
-          type: capabilities.isMobile ? 'mobile' : 'desktop',
+          type: isMobile ? 'mobile' : 'desktop',
           userAgent: navigator.userAgent,
           screen: {
             width: window.screen.width,
@@ -172,20 +176,21 @@ function App() {
           performance: capabilities.performance
         },
         optimization: {
-          quality: capabilities.performance.memory === 'low' ? 'low' : 'high',
+          quality: isMobile ? 'low' : capabilities.performance.memory === 'low' ? 'low' : 'high',
           progressive_loading: true,
           hardware_acceleration: capabilities.performance.cpu === 'high',
-          parallel_processing: capabilities.cores > 2,
-          chunk_size: capabilities.isMobile ? 524288 : 1048576 // 512KB for mobile, 1MB for desktop
+          parallel_processing: !isMobile && capabilities.cores > 2,
+          chunk_size: isMobile ? 262144 : 1048576 // 256KB for mobile, 1MB for desktop
         }
       };
       
       // Add retry logic with progressive fallback
       let retries = 0;
-      const maxRetries = 3;
+      const maxRetries = isMobile ? 2 : 3; // Fewer retries on mobile to prevent timeout
       
       while (retries < maxRetries) {
         try {
+          // Attempt to process with current settings
           const response = await apiService.processImage(fileId, processSettings);
           console.log('Image processed successfully:', response.data);
           
@@ -197,22 +202,32 @@ function App() {
           console.error(`Processing attempt ${retries} failed:`, error);
           
           if (retries === maxRetries) {
-            // If all retries fail, try with reduced quality
-            if (processSettings.optimization.quality !== 'low') {
-              console.log('Retrying with reduced quality...');
-              processSettings.optimization.quality = 'low';
-              processSettings.optimization.chunk_size = 524288; // 512KB chunks
-              const response = await apiService.processImage(fileId, processSettings);
-              console.log('Image processed successfully with reduced quality:', response.data);
-              setResults(response.data);
-              setCurrentStep('results');
-              return;
+            // For mobile, always try with lowest possible settings on final retry
+            if (isMobile || processSettings.optimization.quality !== 'low') {
+              console.log('Retrying with minimum settings...');
+              processSettings.optimization = {
+                ...processSettings.optimization,
+                quality: 'low',
+                chunk_size: 262144, // 256KB chunks
+                parallel_processing: false,
+                hardware_acceleration: false
+              };
+              try {
+                const response = await apiService.processImage(fileId, processSettings);
+                console.log('Image processed successfully with reduced settings:', response.data);
+                setResults(response.data);
+                setCurrentStep('results');
+                return;
+              } catch (finalError) {
+                throw finalError;
+              }
             }
             throw error;
           }
           
-          // Wait before retrying with exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retries) * 1000));
+          // Shorter backoff times for mobile
+          const backoffTime = isMobile ? 1000 * retries : Math.pow(2, retries) * 1000;
+          await new Promise(resolve => setTimeout(resolve, backoffTime));
         }
       }
     } catch (error) {
@@ -223,6 +238,8 @@ function App() {
         errorMessage += error.response.data.error;
       } else if (error.message?.includes('Network Error')) {
         errorMessage += 'Network connection issue. Please check your connection and try again.';
+      } else if (error.message?.includes('timeout')) {
+        errorMessage += 'The request timed out. Please try again with lower quality settings.';
       } else if (error.message) {
         errorMessage += error.message;
       }

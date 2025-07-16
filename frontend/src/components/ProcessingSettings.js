@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -16,7 +16,8 @@ import {
   ButtonGroup,
   CircularProgress,
   Snackbar,
-  Alert
+  Alert,
+  LinearProgress
 } from '@mui/material';
 import { Settings, PlayArrow, Speed, HighQuality, PhoneAndroid } from '@mui/icons-material';
 
@@ -60,6 +61,11 @@ const MOBILE_PRESETS = {
   }
 };
 
+// Detect mobile device
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
+
 const ProcessingSettings = ({ 
   settings, 
   defaultSettings, 
@@ -68,8 +74,17 @@ const ProcessingSettings = ({
   uploadedFile, 
   processing 
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const buttonRef = useRef(null);
+  const isMobile = isMobileDevice();
+
+  // Prevent double submission
+  useEffect(() => {
+    if (!processing && isSubmitting) {
+      setIsSubmitting(false);
+    }
+  }, [processing]);
 
   const handleSettingChange = (key, value) => {
     const newSettings = { ...settings, [key]: value };
@@ -84,23 +99,60 @@ const ProcessingSettings = ({
     onSettingsChange(MOBILE_PRESETS[preset].settings);
   };
 
-  // Improved process handler for both mobile and desktop
-  const handleProcess = useCallback(() => {
-    if (processing) return; // Prevent multiple clicks while processing
+  // Improved process handler with touchstart/click handling
+  const handleProcess = useCallback(async (event) => {
+    event.preventDefault(); // Prevent any default behavior
     
+    // Prevent double submission
+    if (isSubmitting || processing) {
+      return;
+    }
+
     try {
-      // Call process immediately without debounce
-      onProcess();
+      setIsSubmitting(true);
+      
+      // Disable button immediately
+      if (buttonRef.current) {
+        buttonRef.current.disabled = true;
+      }
+
+      // Call process handler
+      await onProcess();
     } catch (error) {
       console.error('Processing error:', error);
       setShowWarning(true);
     }
-  }, [onProcess, processing]);
+  }, [onProcess, processing, isSubmitting]);
 
   // Handle closing warning message
   const handleCloseWarning = () => {
     setShowWarning(false);
   };
+
+  // Add touch event listeners for mobile
+  useEffect(() => {
+    if (!buttonRef.current || !isMobile) return;
+
+    const button = buttonRef.current;
+    
+    const touchStartHandler = (e) => {
+      e.preventDefault();
+      button.style.transform = 'scale(0.98)';
+    };
+    
+    const touchEndHandler = (e) => {
+      e.preventDefault();
+      button.style.transform = 'scale(1)';
+    };
+
+    button.addEventListener('touchstart', touchStartHandler);
+    button.addEventListener('touchend', touchEndHandler);
+
+    return () => {
+      button.removeEventListener('touchstart', touchStartHandler);
+      button.removeEventListener('touchend', touchEndHandler);
+    };
+  }, [isMobile]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -303,12 +355,13 @@ const ProcessingSettings = ({
         </Paper>
       )}
 
-      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexDirection: isMobile ? 'column' : 'row' }}>
         <Button
+          ref={buttonRef}
           variant="contained"
           size="large"
           onClick={handleProcess}
-          disabled={processing}
+          disabled={processing || isSubmitting}
           startIcon={processing ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
           sx={{ 
             minWidth: isMobile ? '100%' : 200,
@@ -323,7 +376,10 @@ const ProcessingSettings = ({
             '&:active': {
               transform: 'scale(0.98)',
             },
-            transition: 'transform 0.1s ease-in-out'
+            transition: 'transform 0.1s ease-in-out, opacity 0.2s ease-in-out',
+            WebkitTapHighlightColor: 'transparent', // Remove tap highlight on mobile
+            cursor: (processing || isSubmitting) ? 'not-allowed' : 'pointer',
+            pointerEvents: (processing || isSubmitting) ? 'none' : 'auto'
           }}
         >
           {processing ? 'Processing...' : 'Generate Paint by Numbers'}
@@ -332,7 +388,7 @@ const ProcessingSettings = ({
         <Button
           variant="outlined"
           onClick={resetToDefaults}
-          disabled={processing}
+          disabled={processing || isSubmitting}
           sx={{
             minWidth: isMobile ? '100%' : 'auto',
             height: isMobile ? 48 : 'auto'
@@ -342,11 +398,12 @@ const ProcessingSettings = ({
         </Button>
       </Box>
 
-      {/* Mobile processing indicator */}
-      {isMobile && processing && (
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            Please keep the app open while processing...
+      {/* Processing indicator */}
+      {(processing || isSubmitting) && (
+        <Box sx={{ mt: 2, width: '100%' }}>
+          <LinearProgress />
+          <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
+            {isMobile ? 'Please keep the app open while processing...' : 'Processing your image...'}
           </Typography>
         </Box>
       )}
