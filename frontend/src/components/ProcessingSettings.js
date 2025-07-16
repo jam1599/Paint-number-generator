@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -14,6 +14,9 @@ import {
   CardContent,
   Chip,
   ButtonGroup,
+  CircularProgress,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { Settings, PlayArrow, Speed, HighQuality, PhoneAndroid } from '@mui/icons-material';
 
@@ -70,6 +73,10 @@ const ProcessingSettings = ({
   uploadedFile, 
   processing 
 }) => {
+  const [debounceTimeout, setDebounceTimeout] = useState(null);
+  const [clickCount, setClickCount] = useState(0);
+  const [showWarning, setShowWarning] = useState(false);
+
   const handleSettingChange = (key, value) => {
     const newSettings = { ...settings, [key]: value };
     onSettingsChange(newSettings);
@@ -81,6 +88,35 @@ const ProcessingSettings = ({
 
   const applyPreset = (preset) => {
     onSettingsChange(MOBILE_PRESETS[preset].settings);
+  };
+
+  // Debounced process handler with retry logic
+  const handleProcess = useCallback(() => {
+    // Clear any existing timeout
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+
+    // Increment click count
+    setClickCount(prev => prev + 1);
+
+    // Show warning if clicked too many times
+    if (clickCount > 2) {
+      setShowWarning(true);
+      setClickCount(0); // Reset count
+      return;
+    }
+
+    // Set debounce timeout
+    setDebounceTimeout(setTimeout(() => {
+      onProcess();
+      setClickCount(0); // Reset count after successful process
+    }, 500)); // 500ms debounce
+  }, [onProcess, debounceTimeout, clickCount]);
+
+  // Handle closing warning message
+  const handleCloseWarning = () => {
+    setShowWarning(false);
   };
 
   return (
@@ -288,10 +324,18 @@ const ProcessingSettings = ({
         <Button
           variant="contained"
           size="large"
-          onClick={onProcess}
+          onClick={handleProcess}
           disabled={processing}
-          startIcon={<PlayArrow />}
-          sx={{ minWidth: 200 }}
+          startIcon={processing ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
+          sx={{ 
+            minWidth: 200,
+            position: 'relative',
+            '&:disabled': {
+              backgroundColor: 'primary.main',
+              color: 'white',
+              opacity: 0.7
+            }
+          }}
         >
           {processing ? 'Processing...' : 'Generate Paint by Numbers'}
         </Button>
@@ -309,9 +353,22 @@ const ProcessingSettings = ({
         <Typography variant="body2" color="text.secondary">
           <strong>Processing Preview:</strong> Your image will be processed with {settings.num_colors || 15} colors, 
           blur level {settings.blur_amount || 0}, and edge sensitivity {settings.edge_threshold || 50}. 
-          This may take 30-60 seconds depending on image size.
+          {isMobileDevice() ? ' Mobile optimizations are enabled for faster processing.' : ''} 
+          Please wait while processing completes.
         </Typography>
       </Paper>
+
+      {/* Warning Snackbar */}
+      <Snackbar 
+        open={showWarning} 
+        autoHideDuration={6000} 
+        onClose={handleCloseWarning}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseWarning} severity="warning" sx={{ width: '100%' }}>
+          Please wait for the processing to complete. Multiple clicks may cause issues.
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

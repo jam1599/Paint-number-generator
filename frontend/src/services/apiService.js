@@ -4,18 +4,29 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://paint-number-gene
 
 console.log('API Base URL:', API_BASE_URL);
 
+// Create axios instance with optimized settings
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 300000, // 5 minutes timeout for processing
+  timeout: 120000, // 2 minutes timeout for mobile processing
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add request interceptor for logging
+// Add request interceptor for mobile optimization
 apiClient.interceptors.request.use(
   (config) => {
-    console.log('Making API request:', config.method?.toUpperCase(), config.url);
+    // Add mobile detection header
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    config.headers['X-Device-Type'] = isMobile ? 'mobile' : 'desktop';
+    config.headers['X-Device-Info'] = JSON.stringify({
+      userAgent: navigator.userAgent,
+      screen: {
+        width: window.screen.width,
+        height: window.screen.height,
+      },
+    });
+
     return config;
   },
   (error) => {
@@ -24,14 +35,21 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add response interceptor for error handling
+// Add response interceptor for better error handling
 apiClient.interceptors.response.use(
-  (response) => {
-    console.log('API response:', response.status, response.config.url);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('API error:', error.response?.status, error.response?.data || error.message);
+    // Network or timeout errors
+    if (!error.response) {
+      error.message = 'Network error or server timeout. Please check your connection.';
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        error.message += ' If on mobile data, try using WiFi for better stability.';
+      }
+    }
+    // Server errors
+    else if (error.response.status >= 500) {
+      error.message = 'Server error. Please try again in a few moments.';
+    }
     return Promise.reject(error);
   }
 );
@@ -41,7 +59,7 @@ const apiService = {
   uploadFile: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     return await apiClient.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -49,12 +67,24 @@ const apiService = {
     });
   },
 
-  // Process image
+  // Process image with enhanced mobile support
   processImage: async (fileId, settings) => {
-    return await apiClient.post('/process', {
-      file_id: fileId,
-      settings: settings,
-    });
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Add mobile-specific headers
+    const headers = {
+      'X-Device-Type': isMobile ? 'mobile' : 'desktop',
+      'X-Request-Start': new Date().toISOString(),
+    };
+
+    return await apiClient.post(
+      '/process',
+      {
+        file_id: fileId,
+        settings: settings,
+      },
+      { headers }
+    );
   },
 
   // Download file
@@ -62,7 +92,7 @@ const apiService = {
     const response = await apiClient.get(`/download/${fileId}/${fileType}`, {
       responseType: 'blob',
     });
-    
+
     // Create download link
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
@@ -72,7 +102,7 @@ const apiService = {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
-    
+
     return response;
   },
 

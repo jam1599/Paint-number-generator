@@ -116,15 +116,62 @@ function App() {
       setCurrentStep('processing');
       console.log('Processing image with settings:', settings);
       
-      const response = await apiService.processImage(fileId, settings);
-      console.log('Image processed successfully:', response.data);
+      // Add mobile flag to settings if on mobile device
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const processSettings = {
+        ...settings,
+        mobile_optimized: isMobile,
+        device_info: {
+          type: isMobile ? 'mobile' : 'desktop',
+          userAgent: navigator.userAgent,
+          screen: {
+            width: window.screen.width,
+            height: window.screen.height
+          }
+        }
+      };
       
-      setResults(response.data);
-      setCurrentStep('results');
+      // Add retry logic for mobile network issues
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          const response = await apiService.processImage(fileId, processSettings);
+          console.log('Image processed successfully:', response.data);
+          
+          setResults(response.data);
+          setCurrentStep('results');
+          return; // Success, exit retry loop
+        } catch (error) {
+          retries++;
+          console.error(`Processing attempt ${retries} failed:`, error);
+          
+          if (retries === maxRetries) {
+            throw error; // Re-throw if all retries failed
+          }
+          
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, retries) * 1000));
+        }
+      }
     } catch (error) {
       console.error('Processing error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to process image';
-      setError(`Processing failed: ${errorMessage}. Please try again.`);
+      let errorMessage = 'Failed to process image. ';
+      
+      if (error.response?.data?.error) {
+        errorMessage += error.response.data.error;
+      } else if (error.message?.includes('Network Error')) {
+        errorMessage += 'Network connection issue. Please check your connection and try again.';
+      } else if (error.message) {
+        errorMessage += error.message;
+      }
+      
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        errorMessage += ' If on mobile data, try using WiFi for better connection stability.';
+      }
+      
+      setError(errorMessage);
       setCurrentStep('settings');
     } finally {
       setProcessing(false);
