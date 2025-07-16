@@ -47,8 +47,15 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
 
   const handleDownload = async (filename) => {
     try {
-      const response = await fetch(`${apiUrl}/api/download/${filename}`);
-      if (!response.ok) throw new Error('Download failed');
+      // Remove any double slashes and ensure correct path
+      const downloadUrl = `${apiUrl}/download/${filename}`.replace(/([^:]\/)\/+/g, "$1");
+      console.log('Downloading from:', downloadUrl); // Debug log
+      
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        console.error('Download failed with status:', response.status);
+        throw new Error(`Download failed with status: ${response.status}`);
+      }
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -96,7 +103,7 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
         >
           {!imageError ? (
             <img 
-              src={`${apiUrl}/api/download/${file_id}_template.png`}
+              src={`${apiUrl}/download/${file_id}_template.png`}
               alt="Paint by Numbers Template"
               onError={handleImageError}
               style={{ 

@@ -313,21 +313,33 @@ def process_image():
         logger.error(f"Processing error: {str(e)}")
         return jsonify({'error': f'Processing failed: {str(e)}'}), 500
 
-@app.route('/api/download/<file_id>/<file_type>', methods=['GET'])
-def download_file(file_id: str, file_type: str):
-    """Download processed file."""
+@app.route('/download/<filename>', methods=['GET'])
+def download_file(filename):
+    """Download a generated file."""
     try:
-        filename = f"{file_id}_{file_type}"
-        filepath = os.path.join(app.config['OUTPUT_FOLDER'], filename)
-        
-        if not os.path.exists(filepath):
+        # Ensure the file exists in the output folder
+        file_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
+        if not os.path.exists(file_path):
             return jsonify({'error': 'File not found'}), 404
-        
-        return send_file(filepath, as_attachment=True)
-        
+
+        # Return the file with proper headers
+        response = send_file(
+            file_path,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=filename
+        )
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        return response
+
     except Exception as e:
-        logger.error(f"Download error: {str(e)}")
-        return jsonify({'error': 'Download failed'}), 500
+        logger.error(f"Error downloading file: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/download/<filename>', methods=['GET'])
+def legacy_download_file(filename):
+    """Legacy download route - redirects to new route"""
+    return download_file(filename)
 
 @app.route('/api/settings', methods=['GET'])
 def get_default_settings():
