@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -15,67 +15,63 @@ import {
   Chip,
   ButtonGroup,
   CircularProgress,
-  Alert,
-  Snackbar
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { Settings, PlayArrow, Speed, HighQuality, PhoneAndroid } from '@mui/icons-material';
 
-// Performance presets based on device type
-const PERFORMANCE_PRESETS = {
-  desktop_high: {
-    name: 'High Performance',
+// Mobile performance presets
+const MOBILE_PRESETS = {
+  fast: {
+    name: 'Fast (Mobile)',
+    icon: <Speed />,
+    settings: {
+      num_colors: 8,
+      blur_amount: 1,
+      edge_threshold: 75,
+      min_area: 200,
+      output_format: 'svg'
+    },
+    description: 'Quick processing for mobile devices'
+  },
+  balanced: {
+    name: 'Balanced',
+    icon: <PhoneAndroid />,
+    settings: {
+      num_colors: 12,
+      blur_amount: 2,
+      edge_threshold: 50,
+      min_area: 100,
+      output_format: 'svg'
+    },
+    description: 'Good balance of speed and quality'
+  },
+  quality: {
+    name: 'High Quality',
     icon: <HighQuality />,
     settings: {
-      num_colors: 30,
+      num_colors: 20,
       blur_amount: 3,
       edge_threshold: 25,
       min_area: 50,
       output_format: 'svg'
     },
-    description: 'Best quality, optimized for powerful desktops'
-  },
-  desktop_balanced: {
-    name: 'Balanced',
-    icon: <Speed />,
-    settings: {
-      num_colors: 20,
-      blur_amount: 2,
-      edge_threshold: 50,
-      min_area: 75,
-      output_format: 'svg'
-    },
-    description: 'Good balance of speed and quality'
-  },
-  mobile_optimized: {
-    name: 'Mobile Optimized',
-    icon: <PhoneAndroid />,
-    settings: {
-      num_colors: 15,
-      blur_amount: 1,
-      edge_threshold: 75,
-      min_area: 100,
-      output_format: 'svg'
-    },
-    description: 'Optimized for mobile devices'
+    description: 'Best quality, slower processing'
   }
 };
 
-// Device detection with performance assessment
+// Device profile detection
 const getDeviceProfile = () => {
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const memory = navigator?.deviceMemory || 4;
-  const cores = navigator?.hardwareConcurrency || 4;
-  
-  const isHighPerformance = !isMobile && cores >= 8 && memory >= 8;
-  const isLowPerformance = isMobile || (cores <= 2 || memory <= 4);
-  
-  return {
-    isMobile,
-    isHighPerformance,
-    isLowPerformance,
-    cores,
-    memory
-  };
+  const isLowEnd = navigator.hardwareConcurrency <= 4;
+  const isHighEnd = navigator.hardwareConcurrency >= 8;
+
+  if (isMobile) {
+    if (isLowEnd) return 'fast';
+    if (isHighEnd) return 'quality';
+    return 'balanced';
+  }
+  return 'quality';
 };
 
 const ProcessingSettings = ({ 
@@ -88,22 +84,45 @@ const ProcessingSettings = ({
 }) => {
   const [showWarning, setShowWarning] = useState(false);
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const [currentProfile] = useState(getDeviceProfile());
+
+  // Initialize with device-specific settings on mount
+  React.useEffect(() => {
+    const preset = MOBILE_PRESETS[currentProfile];
+    if (isMobile && preset) {
+      onSettingsChange(preset.settings);
+    }
+  }, [currentProfile, isMobile, onSettingsChange]);
 
   const handleSettingChange = (key, value) => {
     const newSettings = { ...settings, [key]: value };
     onSettingsChange(newSettings);
   };
 
-  const handleProcessClick = async () => {
+  const applyPreset = (preset) => {
+    const presetSettings = MOBILE_PRESETS[preset]?.settings;
+    if (presetSettings) {
+      onSettingsChange(presetSettings);
+    }
+  };
+
+  // Process handler with mobile-specific handling
+  const handleProcess = useCallback(async () => {
     if (processing) return;
-    
     try {
+      // For mobile, ensure we're using appropriate settings
+      if (isMobile && !settings.mobile_optimized) {
+        const currentPreset = MOBILE_PRESETS[currentProfile];
+        if (currentPreset) {
+          onSettingsChange(currentPreset.settings);
+        }
+      }
       await onProcess();
     } catch (error) {
       console.error('Processing error:', error);
       setShowWarning(true);
     }
-  };
+  }, [onProcess, processing, isMobile, settings.mobile_optimized, currentProfile, onSettingsChange]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -111,54 +130,15 @@ const ProcessingSettings = ({
         <Settings />
         Processing Settings
       </Typography>
-      
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Adjust these settings to customize your paint-by-numbers template.
-      </Typography>
 
-      {/* Performance Recommendation */}
-      <Paper sx={{ p: 2, mb: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {deviceProfile.isHighPerformance ? <HighQuality /> : deviceProfile.isMobile ? <PhoneAndroid /> : <Speed />}
-          {deviceProfile.isHighPerformance ? 'High-Performance Mode' : 'Optimized Settings'}
-        </Typography>
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          {deviceProfile.isHighPerformance 
-            ? 'Using advanced processing optimizations for your high-performance device.' 
-            : deviceProfile.isMobile 
-              ? 'Mobile-optimized settings for better performance.'
-              : 'Balanced settings for desktop processing.'}
-        </Typography>
-        <ButtonGroup fullWidth variant="contained" size="small">
-          {Object.entries(PERFORMANCE_PRESETS).map(([key, preset]) => (
-            <Button
-              key={key}
-              onClick={() => applyPreset(key)}
-              startIcon={preset.icon}
-              sx={{ 
-                flexDirection: 'column', 
-                py: 1,
-                backgroundColor: getRecommendedPreset() === key ? 'primary.dark' : 'primary.main'
-              }}
-            >
-              <Typography variant="caption">{preset.name}</Typography>
-            </Button>
-          ))}
-        </ButtonGroup>
-      </Paper>
-
-      {/* Mobile Performance Presets */}
-      {deviceProfile.isMobile && (
+      {/* Mobile Presets */}
+      {isMobile && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PhoneAndroid />
-            Mobile Optimized Presets
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Choose a preset optimized for mobile performance:
+          <Typography variant="h6" gutterBottom>
+            Mobile Settings
           </Typography>
           <ButtonGroup fullWidth variant="contained" size="small">
-            {Object.entries(PERFORMANCE_PRESETS).map(([key, preset]) => (
+            {Object.entries(MOBILE_PRESETS).map(([key, preset]) => (
               <Button
                 key={key}
                 onClick={() => applyPreset(key)}
@@ -172,6 +152,7 @@ const ProcessingSettings = ({
         </Paper>
       )}
 
+      {/* Current Image */}
       {uploadedFile && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
@@ -180,7 +161,7 @@ const ProcessingSettings = ({
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant="body2">
-                <strong>File:</strong> {uploadedFile.name}
+                {uploadedFile.name}
               </Typography>
               <Chip 
                 label={`${(uploadedFile.size / 1024 / 1024).toFixed(1)} MB`} 
@@ -192,7 +173,9 @@ const ProcessingSettings = ({
         </Card>
       )}
 
+      {/* Settings Controls */}
       <Grid container spacing={3}>
+        {/* Color Settings */}
         <Grid item xs={12} md={6}>
           <Paper elevation={2} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
@@ -223,67 +206,11 @@ const ProcessingSettings = ({
               step={1}
               marks
               valueLabelDisplay="auto"
-              sx={{ mb: 2 }}
             />
-            <Typography variant="body2" color="text.secondary">
-              Higher values create smoother color transitions
-            </Typography>
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Edge Detection
-            </Typography>
-            
-            <Typography gutterBottom>
-              Edge Threshold: {settings.edge_threshold || 50}
-            </Typography>
-            <Slider
-              value={settings.edge_threshold || 50}
-              onChange={(e, value) => handleSettingChange('edge_threshold', value)}
-              min={10}
-              max={100}
-              step={5}
-              marks={[
-                { value: 10, label: 'Soft' },
-                { value: 50, label: 'Medium' },
-                { value: 100, label: 'Sharp' }
-              ]}
-              valueLabelDisplay="auto"
-              sx={{ mb: 2 }}
-            />
-            <Typography variant="body2" color="text.secondary">
-              Higher values create more defined edges
-            </Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Region Settings
-            </Typography>
-            
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Minimum Area</InputLabel>
-              <Select
-                value={settings.min_area || 100}
-                onChange={(e) => handleSettingChange('min_area', e.target.value)}
-                label="Minimum Area"
-              >
-                {(defaultSettings.area_options || [50, 100, 200, 500, 1000]).map(area => (
-                  <MenuItem key={area} value={area}>{area} pixels</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Typography variant="body2" color="text.secondary">
-              Smaller regions will be merged into larger ones
-            </Typography>
-          </Paper>
-        </Grid>
-
+        {/* Format Settings */}
         <Grid item xs={12} md={6}>
           <Paper elevation={2} sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom>
@@ -293,69 +220,38 @@ const ProcessingSettings = ({
             <FormControl fullWidth>
               <InputLabel>Format</InputLabel>
               <Select
-                value={settings.output_format || 'png'}
+                value={settings.output_format || 'svg'}
                 onChange={(e) => handleSettingChange('output_format', e.target.value)}
                 label="Format"
               >
+                <MenuItem value="svg">SVG (Vector)</MenuItem>
                 <MenuItem value="png">PNG (High Quality)</MenuItem>
                 <MenuItem value="jpg">JPEG (Smaller Size)</MenuItem>
-                <MenuItem value="svg">SVG (Vector)</MenuItem>
               </Select>
             </FormControl>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              PNG recommended for best quality
-            </Typography>
           </Paper>
         </Grid>
       </Grid>
 
-      {/* Mobile Presets Section */}
-      {deviceProfile.isMobile && (
-        <Paper elevation={2} sx={{ p: 3, mt: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Performance Presets
-          </Typography>
-          <ButtonGroup variant="outlined" fullWidth>
-            {Object.keys(PERFORMANCE_PRESETS).map(key => (
-              <Button 
-                key={key} 
-                onClick={() => applyPreset(key)} 
-                sx={{ 
-                  flex: 1, 
-                  borderColor: settings.num_colors === PERFORMANCE_PRESETS[key].settings.num_colors ? 'primary.main' : undefined,
-                  color: settings.num_colors === PERFORMANCE_PRESETS[key].settings.num_colors ? 'primary.main' : undefined
-                }}
-              >
-                {PERFORMANCE_PRESETS[key].icon}
-                {PERFORMANCE_PRESETS[key].name}
-              </Button>
-            ))}
-          </ButtonGroup>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            {PERFORMANCE_PRESETS[Object.keys(PERFORMANCE_PRESETS)[0]].description}
-          </Typography>
-        </Paper>
-      )}
-
       {/* Process Button */}
       <Box sx={{ 
         mt: 4, 
-        display: 'flex', 
+        display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center', 
-        gap: 2 
+        alignItems: 'center',
+        gap: 2
       }}>
         <Button
           variant="contained"
-          color="primary"
           size="large"
-          onClick={handleProcessClick}
+          onClick={handleProcess}
           disabled={processing}
           sx={{
             width: isMobile ? '100%' : 'auto',
-            minWidth: isMobile ? '100%' : '200px',
+            minWidth: '200px',
             height: isMobile ? '56px' : 'auto',
             fontSize: isMobile ? '1.2rem' : '1rem',
+            position: 'relative',
             backgroundColor: 'primary.main',
             '&:hover': {
               backgroundColor: 'primary.dark',
@@ -364,7 +260,9 @@ const ProcessingSettings = ({
               transform: 'scale(0.98)',
             },
             '&:disabled': {
-              backgroundColor: 'rgba(0, 0, 0, 0.12)',
+              backgroundColor: 'primary.main',
+              opacity: 0.7,
+              color: 'white'
             }
           }}
         >
@@ -382,7 +280,7 @@ const ProcessingSettings = ({
         </Button>
 
         {processing && (
-          <Typography variant="body2" color="textSecondary" align="center">
+          <Typography variant="body2" color="textSecondary">
             {isMobile 
               ? 'Please keep the app open while processing...'
               : 'Processing your image...'}
@@ -390,7 +288,7 @@ const ProcessingSettings = ({
         )}
       </Box>
 
-      {/* Warning Snackbar */}
+      {/* Warning Message */}
       <Snackbar
         open={showWarning}
         autoHideDuration={6000}
@@ -398,9 +296,7 @@ const ProcessingSettings = ({
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert severity="warning" onClose={() => setShowWarning(false)}>
-          {isMobile
-            ? 'Processing failed. Please try again with lower quality settings or a smaller image.'
-            : 'Processing failed. Please try again.'}
+          Processing failed. Please try again with lower quality settings.
         </Alert>
       </Snackbar>
     </Box>

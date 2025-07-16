@@ -133,7 +133,9 @@ function App() {
   // Update progress handler for progressive loading
   useEffect(() => {
     window.updateProcessingProgress = (progressData) => {
-      setProgress(progressData.percentage);
+      if (progressData && typeof progressData.percentage === 'number') {
+        setProgress(progressData.percentage);
+      }
     };
     return () => {
       delete window.updateProcessingProgress;
@@ -256,7 +258,10 @@ function App() {
           );
         case 'processing':
           return (
-            <LoadingSpinner message="Processing your image..." />
+            <LoadingSpinner 
+              message={`Processing your image... ${progress}%`}
+              progress={progress}
+            />
           );
         case 'results':
           return (
@@ -356,12 +361,17 @@ function App() {
             </Box>
           </Container>
 
-          {/* Reset FAB */}
-          {currentStep !== 'upload' && (
+          {/* Reset FAB - Always show except during processing */}
+          {currentStep !== 'processing' && (
             <Fab
               color="secondary"
               aria-label="reset"
-              sx={{ position: 'fixed', bottom: 16, right: 16 }}
+              sx={{ 
+                position: 'fixed', 
+                bottom: 16, 
+                right: 16,
+                visibility: currentStep === 'upload' ? 'hidden' : 'visible'
+              }}
               onClick={handleReset}
             >
               <PhotoCamera />
