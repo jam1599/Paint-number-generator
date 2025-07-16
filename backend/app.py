@@ -52,7 +52,7 @@ for url in vercel_urls:
     if url not in cors_origins:
         cors_origins.append(url)
 
-# Configure CORS for both local and production
+# Configure CORS for production and development
 CORS(app, 
      resources={
          r"/*": {
@@ -64,9 +64,21 @@ CORS(app,
                  "https://paint-number-generator.onrender.com"
              ],
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-             "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", 
-                             "X-Requested-With", "x-device-type"],
-             "expose_headers": ["Content-Type", "Authorization"],
+             "allow_headers": [
+                 "Content-Type",
+                 "Authorization",
+                 "Accept",
+                 "Origin",
+                 "X-Requested-With",
+                 "X-Device-Type",
+                 "x-device-type",
+                 "Access-Control-Allow-Origin",
+                 "Access-Control-Allow-Headers"
+             ],
+             "expose_headers": [
+                 "Content-Type",
+                 "Authorization"
+             ],
              "supports_credentials": True,
              "send_wildcard": False
          }
@@ -89,17 +101,26 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 def after_request(response):
     """Add CORS headers to all responses."""
     origin = request.headers.get('Origin')
-    if origin in [
+    allowed_origins = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://paint-number-generator.vercel.app",
         "https://paint-number-generator-1.onrender.com",
         "https://paint-number-generator.onrender.com"
-    ]:
+    ]
+    
+    if origin in allowed_origins:
         response.headers.add('Access-Control-Allow-Origin', origin)
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With, x-device-type')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers.add('Vary', 'Origin')
+    
+    if request.method == 'OPTIONS':
+        # Handle preflight requests
+        response.headers.add('Access-Control-Allow-Headers', 
+            'Content-Type, Authorization, Accept, Origin, X-Requested-With, X-Device-Type, x-device-type, Access-Control-Allow-Origin, Access-Control-Allow-Headers')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS')
+        response.headers.add('Access-Control-Max-Age', '3600')
+    
     return response
 
 def allowed_file(filename: str) -> bool:
