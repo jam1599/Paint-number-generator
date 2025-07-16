@@ -27,6 +27,7 @@ function App() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const loadDefaultSettings = useCallback(async () => {
     try {
@@ -84,6 +85,26 @@ function App() {
     loadDefaultSettings();
   }, [loadDefaultSettings]);
 
+  // Device capability detection
+  const getDeviceCapabilities = useCallback(() => {
+    const memory = navigator?.deviceMemory || 4;
+    const cores = navigator?.hardwareConcurrency || 4;
+    const connection = navigator?.connection?.effectiveType || '4g';
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    return {
+      memory,
+      cores,
+      connection,
+      isMobile,
+      performance: {
+        memory: memory >= 4 ? 'high' : 'low',
+        cpu: cores >= 4 ? 'high' : 'low',
+        network: ['4g', '5g'].includes(connection) ? 'high' : 'low'
+      }
+    };
+  }, []);
+
   const handleFileUpload = async (file) => {
     try {
       setError(null);
@@ -109,29 +130,57 @@ function App() {
     setSettings(newSettings);
   };
 
+  // Update progress handler for progressive loading
+  useEffect(() => {
+    window.updateProcessingProgress = (progressData) => {
+      setProgress(progressData.percentage);
+    };
+    return () => {
+      delete window.updateProcessingProgress;
+    };
+  }, []);
+
   const handleProcessImage = async () => {
     try {
       setError(null);
       setProcessing(true);
       setCurrentStep('processing');
+      setProgress(0);
+      
       console.log('Processing image with settings:', settings);
       
-      // Add mobile flag to settings if on mobile device
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      // Get device capabilities
+      const capabilities = getDeviceCapabilities();
+      
+      // Optimize settings based on device capabilities
       const processSettings = {
         ...settings,
-        mobile_optimized: isMobile,
+        mobile_optimized: capabilities.isMobile,
         device_info: {
-          type: isMobile ? 'mobile' : 'desktop',
+          type: capabilities.isMobile ? 'mobile' : 'desktop',
           userAgent: navigator.userAgent,
           screen: {
             width: window.screen.width,
-            height: window.screen.height
-          }
+            height: window.screen.height,
+            pixelRatio: window.devicePixelRatio
+          },
+          hardware: {
+            memory: capabilities.memory,
+            cores: capabilities.cores,
+            connection: capabilities.connection
+          },
+          performance: capabilities.performance
+        },
+        optimization: {
+          quality: capabilities.performance.memory === 'low' ? 'low' : 'high',
+          progressive_loading: true,
+          hardware_acceleration: capabilities.performance.cpu === 'high',
+          parallel_processing: capabilities.cores > 2,
+          chunk_size: capabilities.isMobile ? 524288 : 1048576 // 512KB for mobile, 1MB for desktop
         }
       };
       
-      // Add retry logic for mobile network issues
+      // Add retry logic with progressive fallback
       let retries = 0;
       const maxRetries = 3;
       
@@ -142,16 +191,27 @@ function App() {
           
           setResults(response.data);
           setCurrentStep('results');
-          return; // Success, exit retry loop
+          return;
         } catch (error) {
           retries++;
           console.error(`Processing attempt ${retries} failed:`, error);
           
           if (retries === maxRetries) {
-            throw error; // Re-throw if all retries failed
+            // If all retries fail, try with reduced quality
+            if (processSettings.optimization.quality !== 'low') {
+              console.log('Retrying with reduced quality...');
+              processSettings.optimization.quality = 'low';
+              processSettings.optimization.chunk_size = 524288; // 512KB chunks
+              const response = await apiService.processImage(fileId, processSettings);
+              console.log('Image processed successfully with reduced quality:', response.data);
+              setResults(response.data);
+              setCurrentStep('results');
+              return;
+            }
+            throw error;
           }
           
-          // Wait before retrying (exponential backoff)
+          // Wait before retrying with exponential backoff
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, retries) * 1000));
         }
       }
@@ -167,14 +227,19 @@ function App() {
         errorMessage += error.message;
       }
       
-      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      const capabilities = getDeviceCapabilities();
+      if (capabilities.isMobile) {
         errorMessage += ' If on mobile data, try using WiFi for better connection stability.';
+        if (capabilities.performance.memory === 'low') {
+          errorMessage += ' Your device has limited memory. Try using a smaller image or lower quality settings.';
+        }
       }
       
       setError(errorMessage);
       setCurrentStep('settings');
     } finally {
       setProcessing(false);
+      setProgress(0);
     }
   };
 

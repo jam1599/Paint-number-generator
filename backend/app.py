@@ -23,6 +23,22 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# Enhanced CORS configuration
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "https://paint-number-generator.vercel.app",
+            "https://paint-number-generator-*.vercel.app",
+            "http://localhost:3000",
+            "http://localhost:5000"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Device-Type", "X-Device-Info"],
+        "expose_headers": ["X-Processing-Progress"],
+        "supports_credentials": True
+    }
+})
+
 # Memory monitoring function
 def get_memory_usage():
     """Get current memory usage."""

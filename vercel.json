@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://paint-number-generator-1.onrender.com/api/$1",
+      "headers": {
+        "Access-Control-Allow-Origin": "https://paint-number-generator.vercel.app",
+        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Device-Type,X-Device-Info"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://paint-number-generator-1.onrender.com/api"
+  }
+}
