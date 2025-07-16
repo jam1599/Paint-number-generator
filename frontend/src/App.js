@@ -142,10 +142,7 @@ function App() {
 
   const handleProcessImage = async () => {
     try {
-      // Clear any existing error state
       setError(null);
-      
-      // Set processing state immediately
       setProcessing(true);
       setCurrentStep('processing');
       setProgress(0);
@@ -155,8 +152,9 @@ function App() {
       // Get device capabilities
       const capabilities = getDeviceCapabilities();
       const isMobile = capabilities.isMobile;
+      const isHighPerformance = capabilities.cores >= 8 && capabilities.memory >= 8;
       
-      // Mobile-optimized settings with reduced memory usage
+      // Optimized settings based on device capabilities
       const processSettings = {
         ...settings,
         mobile_optimized: isMobile,
@@ -176,22 +174,31 @@ function App() {
           performance: capabilities.performance
         },
         optimization: {
-          quality: isMobile ? 'low' : capabilities.performance.memory === 'low' ? 'low' : 'high',
+          quality: isMobile ? 'low' : isHighPerformance ? 'ultra' : 'high',
           progressive_loading: true,
-          hardware_acceleration: capabilities.performance.cpu === 'high',
-          parallel_processing: !isMobile && capabilities.cores > 2,
-          chunk_size: isMobile ? 262144 : 1048576 // 256KB for mobile, 1MB for desktop
+          hardware_acceleration: !isMobile,
+          parallel_processing: !isMobile,
+          parallel_threads: Math.min(capabilities.cores, 8), // Use up to 8 threads
+          chunk_size: isMobile ? 262144 : isHighPerformance ? 2097152 : 1048576, // 256KB mobile, 2MB high-perf desktop, 1MB normal desktop
+          batch_size: isMobile ? 1 : isHighPerformance ? 4 : 2, // Process multiple chunks at once on desktop
+          memory_limit: Math.min(capabilities.memory * 0.7, 16) * 1024 * 1024, // 70% of available memory up to 16GB
+          use_gpu: !isMobile && capabilities.performance.gpu === 'high',
+          optimized_algorithms: {
+            color_quantization: isHighPerformance ? 'advanced' : 'standard',
+            edge_detection: isHighPerformance ? 'precise' : 'balanced',
+            region_processing: isHighPerformance ? 'high_quality' : 'balanced'
+          }
         }
       };
       
-      // Add retry logic with progressive fallback
+      // Enhanced retry logic with smart fallback
       let retries = 0;
-      const maxRetries = isMobile ? 2 : 3; // Fewer retries on mobile to prevent timeout
+      const maxRetries = isMobile ? 2 : 3;
+      let currentSettings = { ...processSettings };
       
       while (retries < maxRetries) {
         try {
-          // Attempt to process with current settings
-          const response = await apiService.processImage(fileId, processSettings);
+          const response = await apiService.processImage(fileId, currentSettings);
           console.log('Image processed successfully:', response.data);
           
           setResults(response.data);
@@ -202,18 +209,25 @@ function App() {
           console.error(`Processing attempt ${retries} failed:`, error);
           
           if (retries === maxRetries) {
-            // For mobile, always try with lowest possible settings on final retry
-            if (isMobile || processSettings.optimization.quality !== 'low') {
-              console.log('Retrying with minimum settings...');
-              processSettings.optimization = {
-                ...processSettings.optimization,
+            // Smart fallback based on error type
+            if (error.message?.includes('timeout') || error.message?.includes('memory')) {
+              console.log('Retrying with reduced settings...');
+              currentSettings.optimization = {
+                ...currentSettings.optimization,
                 quality: 'low',
-                chunk_size: 262144, // 256KB chunks
+                chunk_size: isMobile ? 262144 : 524288,
                 parallel_processing: false,
-                hardware_acceleration: false
+                hardware_acceleration: false,
+                batch_size: 1,
+                use_gpu: false,
+                optimized_algorithms: {
+                  color_quantization: 'fast',
+                  edge_detection: 'fast',
+                  region_processing: 'fast'
+                }
               };
               try {
-                const response = await apiService.processImage(fileId, processSettings);
+                const response = await apiService.processImage(fileId, currentSettings);
                 console.log('Image processed successfully with reduced settings:', response.data);
                 setResults(response.data);
                 setCurrentStep('results');
@@ -225,8 +239,21 @@ function App() {
             throw error;
           }
           
-          // Shorter backoff times for mobile
-          const backoffTime = isMobile ? 1000 * retries : Math.pow(2, retries) * 1000;
+          // Adjust settings based on the error type for next retry
+          if (error.message?.includes('timeout')) {
+            currentSettings.optimization.batch_size = Math.max(1, currentSettings.optimization.batch_size - 1);
+            currentSettings.optimization.chunk_size = Math.floor(currentSettings.optimization.chunk_size * 0.75);
+          } else if (error.message?.includes('memory')) {
+            currentSettings.optimization.memory_limit = Math.floor(currentSettings.optimization.memory_limit * 0.75);
+            currentSettings.optimization.parallel_threads = Math.max(2, Math.floor(currentSettings.optimization.parallel_threads * 0.75));
+          }
+          
+          // Dynamic backoff based on error type
+          const baseBackoff = isMobile ? 1000 : 500;
+          const backoffTime = error.message?.includes('timeout') ? 
+            baseBackoff * retries : 
+            Math.pow(2, retries) * baseBackoff;
+          
           await new Promise(resolve => setTimeout(resolve, backoffTime));
         }
       }

@@ -21,49 +21,62 @@ import {
 } from '@mui/material';
 import { Settings, PlayArrow, Speed, HighQuality, PhoneAndroid } from '@mui/icons-material';
 
-// Mobile performance presets
-const MOBILE_PRESETS = {
-  fast: {
-    name: 'Fast (Mobile)',
-    icon: <Speed />,
-    settings: {
-      num_colors: 8,
-      blur_amount: 1,
-      edge_threshold: 75,
-      min_area: 200,
-      output_format: 'svg'
-    },
-    description: 'Quick processing for mobile devices'
-  },
-  balanced: {
-    name: 'Balanced',
-    icon: <PhoneAndroid />,
-    settings: {
-      num_colors: 12,
-      blur_amount: 2,
-      edge_threshold: 50,
-      min_area: 100,
-      output_format: 'svg'
-    },
-    description: 'Good balance of speed and quality'
-  },
-  quality: {
-    name: 'High Quality',
+// Performance presets based on device type
+const PERFORMANCE_PRESETS = {
+  desktop_high: {
+    name: 'High Performance',
     icon: <HighQuality />,
     settings: {
-      num_colors: 20,
+      num_colors: 30,
       blur_amount: 3,
       edge_threshold: 25,
       min_area: 50,
       output_format: 'svg'
     },
-    description: 'Best quality, slower processing'
+    description: 'Best quality, optimized for powerful desktops'
+  },
+  desktop_balanced: {
+    name: 'Balanced',
+    icon: <Speed />,
+    settings: {
+      num_colors: 20,
+      blur_amount: 2,
+      edge_threshold: 50,
+      min_area: 75,
+      output_format: 'svg'
+    },
+    description: 'Good balance of speed and quality'
+  },
+  mobile_optimized: {
+    name: 'Mobile Optimized',
+    icon: <PhoneAndroid />,
+    settings: {
+      num_colors: 15,
+      blur_amount: 1,
+      edge_threshold: 75,
+      min_area: 100,
+      output_format: 'svg'
+    },
+    description: 'Optimized for mobile devices'
   }
 };
 
-// Detect mobile device
-const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+// Device detection with performance assessment
+const getDeviceProfile = () => {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const memory = navigator?.deviceMemory || 4;
+  const cores = navigator?.hardwareConcurrency || 4;
+  
+  const isHighPerformance = !isMobile && cores >= 8 && memory >= 8;
+  const isLowPerformance = isMobile || (cores <= 2 || memory <= 4);
+  
+  return {
+    isMobile,
+    isHighPerformance,
+    isLowPerformance,
+    cores,
+    memory
+  };
 };
 
 const ProcessingSettings = ({ 
@@ -77,7 +90,7 @@ const ProcessingSettings = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const buttonRef = useRef(null);
-  const isMobile = isMobileDevice();
+  const deviceProfile = getDeviceProfile();
 
   // Prevent double submission
   useEffect(() => {
@@ -96,7 +109,7 @@ const ProcessingSettings = ({
   };
 
   const applyPreset = (preset) => {
-    onSettingsChange(MOBILE_PRESETS[preset].settings);
+    onSettingsChange(PERFORMANCE_PRESETS[preset].settings);
   };
 
   // Improved process handler with touchstart/click handling
@@ -131,7 +144,7 @@ const ProcessingSettings = ({
 
   // Add touch event listeners for mobile
   useEffect(() => {
-    if (!buttonRef.current || !isMobile) return;
+    if (!buttonRef.current || !deviceProfile.isMobile) return;
 
     const button = buttonRef.current;
     
@@ -152,7 +165,14 @@ const ProcessingSettings = ({
       button.removeEventListener('touchstart', touchStartHandler);
       button.removeEventListener('touchend', touchEndHandler);
     };
-  }, [isMobile]);
+  }, [deviceProfile.isMobile]);
+
+  // Get appropriate preset based on device capabilities
+  const getRecommendedPreset = () => {
+    if (deviceProfile.isHighPerformance) return 'desktop_high';
+    if (!deviceProfile.isMobile) return 'desktop_balanced';
+    return 'mobile_optimized';
+  };
 
   return (
     <Box sx={{ p: 2 }}>
@@ -165,8 +185,39 @@ const ProcessingSettings = ({
         Adjust these settings to customize your paint-by-numbers template.
       </Typography>
 
+      {/* Performance Recommendation */}
+      <Paper sx={{ p: 2, mb: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {deviceProfile.isHighPerformance ? <HighQuality /> : deviceProfile.isMobile ? <PhoneAndroid /> : <Speed />}
+          {deviceProfile.isHighPerformance ? 'High-Performance Mode' : 'Optimized Settings'}
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          {deviceProfile.isHighPerformance 
+            ? 'Using advanced processing optimizations for your high-performance device.' 
+            : deviceProfile.isMobile 
+              ? 'Mobile-optimized settings for better performance.'
+              : 'Balanced settings for desktop processing.'}
+        </Typography>
+        <ButtonGroup fullWidth variant="contained" size="small">
+          {Object.entries(PERFORMANCE_PRESETS).map(([key, preset]) => (
+            <Button
+              key={key}
+              onClick={() => applyPreset(key)}
+              startIcon={preset.icon}
+              sx={{ 
+                flexDirection: 'column', 
+                py: 1,
+                backgroundColor: getRecommendedPreset() === key ? 'primary.dark' : 'primary.main'
+              }}
+            >
+              <Typography variant="caption">{preset.name}</Typography>
+            </Button>
+          ))}
+        </ButtonGroup>
+      </Paper>
+
       {/* Mobile Performance Presets */}
-      {isMobile && (
+      {deviceProfile.isMobile && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <PhoneAndroid />
@@ -176,7 +227,7 @@ const ProcessingSettings = ({
             Choose a preset optimized for mobile performance:
           </Typography>
           <ButtonGroup fullWidth variant="contained" size="small">
-            {Object.entries(MOBILE_PRESETS).map(([key, preset]) => (
+            {Object.entries(PERFORMANCE_PRESETS).map(([key, preset]) => (
               <Button
                 key={key}
                 onClick={() => applyPreset(key)}
@@ -328,34 +379,34 @@ const ProcessingSettings = ({
       </Grid>
 
       {/* Mobile Presets Section */}
-      {isMobile && (
+      {deviceProfile.isMobile && (
         <Paper elevation={2} sx={{ p: 3, mt: 4 }}>
           <Typography variant="h6" gutterBottom>
             Performance Presets
           </Typography>
           <ButtonGroup variant="outlined" fullWidth>
-            {Object.keys(MOBILE_PRESETS).map(key => (
+            {Object.keys(PERFORMANCE_PRESETS).map(key => (
               <Button 
                 key={key} 
                 onClick={() => applyPreset(key)} 
                 sx={{ 
                   flex: 1, 
-                  borderColor: settings.num_colors === MOBILE_PRESETS[key].settings.num_colors ? 'primary.main' : undefined,
-                  color: settings.num_colors === MOBILE_PRESETS[key].settings.num_colors ? 'primary.main' : undefined
+                  borderColor: settings.num_colors === PERFORMANCE_PRESETS[key].settings.num_colors ? 'primary.main' : undefined,
+                  color: settings.num_colors === PERFORMANCE_PRESETS[key].settings.num_colors ? 'primary.main' : undefined
                 }}
               >
-                {MOBILE_PRESETS[key].icon}
-                {MOBILE_PRESETS[key].name}
+                {PERFORMANCE_PRESETS[key].icon}
+                {PERFORMANCE_PRESETS[key].name}
               </Button>
             ))}
           </ButtonGroup>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            {MOBILE_PRESETS[Object.keys(MOBILE_PRESETS)[0]].description}
+            {PERFORMANCE_PRESETS[Object.keys(PERFORMANCE_PRESETS)[0]].description}
           </Typography>
         </Paper>
       )}
 
-      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexDirection: isMobile ? 'column' : 'row' }}>
+      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexDirection: deviceProfile.isMobile ? 'column' : 'row' }}>
         <Button
           ref={buttonRef}
           variant="contained"
@@ -364,9 +415,9 @@ const ProcessingSettings = ({
           disabled={processing || isSubmitting}
           startIcon={processing ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
           sx={{ 
-            minWidth: isMobile ? '100%' : 200,
-            height: isMobile ? 56 : 'auto',
-            fontSize: isMobile ? '1.2rem' : 'inherit',
+            minWidth: deviceProfile.isMobile ? '100%' : 200,
+            height: deviceProfile.isMobile ? 56 : 'auto',
+            fontSize: deviceProfile.isMobile ? '1.2rem' : 'inherit',
             position: 'relative',
             '&:disabled': {
               backgroundColor: 'primary.main',
@@ -390,8 +441,8 @@ const ProcessingSettings = ({
           onClick={resetToDefaults}
           disabled={processing || isSubmitting}
           sx={{
-            minWidth: isMobile ? '100%' : 'auto',
-            height: isMobile ? 48 : 'auto'
+            minWidth: deviceProfile.isMobile ? '100%' : 'auto',
+            height: deviceProfile.isMobile ? 48 : 'auto'
           }}
         >
           Reset to Defaults
@@ -403,7 +454,7 @@ const ProcessingSettings = ({
         <Box sx={{ mt: 2, width: '100%' }}>
           <LinearProgress />
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
-            {isMobile ? 'Please keep the app open while processing...' : 'Processing your image...'}
+            {deviceProfile.isMobile ? 'Please keep the app open while processing...' : 'Processing your image...'}
           </Typography>
         </Box>
       )}
@@ -412,7 +463,7 @@ const ProcessingSettings = ({
         <Typography variant="body2" color="text.secondary">
           <strong>Processing Preview:</strong> Your image will be processed with {settings.num_colors || 15} colors, 
           blur level {settings.blur_amount || 0}, and edge sensitivity {settings.edge_threshold || 50}. 
-          {isMobile ? ' Mobile optimizations are enabled for faster processing.' : ''} 
+          {deviceProfile.isMobile ? ' Mobile optimizations are enabled for faster processing.' : ''} 
           Please wait while processing completes.
         </Typography>
       </Paper>
