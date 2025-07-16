@@ -23,22 +23,6 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Enhanced CORS configuration
-CORS(app, resources={
-    r"/api/*": {
-        "origins": [
-            "https://paint-number-generator.vercel.app",
-            "https://paint-number-generator-*.vercel.app",
-            "http://localhost:3000",
-            "http://localhost:5000"
-        ],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Device-Type", "X-Device-Info"],
-        "expose_headers": ["X-Processing-Progress"],
-        "supports_credentials": True
-    }
-})
-
 # Memory monitoring function
 def get_memory_usage():
     """Get current memory usage."""
@@ -68,12 +52,25 @@ for url in vercel_urls:
     if url not in cors_origins:
         cors_origins.append(url)
 
-# Configure CORS with wildcard for all origins (temporary fix)
+# Configure CORS for both local and production
 CORS(app, 
-     origins="*",
-     allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     supports_credentials=False)
+     resources={
+         r"/*": {
+             "origins": [
+                 "http://localhost:3000",
+                 "http://127.0.0.1:3000",
+                 "https://paint-number-generator.vercel.app",
+                 "https://paint-number-generator-1.onrender.com",
+                 "https://paint-number-generator.onrender.com"
+             ],
+             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+             "allow_headers": ["Content-Type", "Authorization", "Accept", "Origin", 
+                             "X-Requested-With", "x-device-type"],
+             "expose_headers": ["Content-Type", "Authorization"],
+             "supports_credentials": True,
+             "send_wildcard": False
+         }
+     })
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -91,9 +88,18 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 @app.after_request
 def after_request(response):
     """Add CORS headers to all responses."""
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,Accept,Origin,X-Requested-With')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    origin = request.headers.get('Origin')
+    if origin in [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://paint-number-generator.vercel.app",
+        "https://paint-number-generator-1.onrender.com",
+        "https://paint-number-generator.onrender.com"
+    ]:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With, x-device-type')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
 def allowed_file(filename: str) -> bool:
@@ -217,41 +223,21 @@ def process_image():
         file_id = data['file_id']
         settings = data.get('settings', {})
         
-        # Detect mobile device from User-Agent
-        user_agent = request.headers.get('User-Agent', '').lower()
-        is_mobile = any(device in user_agent for device in [
-            'mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone'
-        ])
-        
         # Start performance monitoring
         start_time = time.time()
         start_memory = get_memory_usage()
         
-        # Mobile-optimized default settings
-        if is_mobile:
-            mobile_defaults = {
-                'num_colors': 10,      # Fewer colors for speed
-                'blur_amount': 1,      # Less blur processing
-                'edge_threshold': 75,  # Simpler edge detection
-                'min_area': 150,       # Larger minimum areas
-                'output_format': 'svg' # SVG is lighter
-            }
-        else:
-            mobile_defaults = {
-                'num_colors': 15,
-                'blur_amount': 2,
-                'edge_threshold': 50,
-                'min_area': 50,
-                'output_format': 'svg'
-            }
+        # Default settings
+        default_settings = {
+            'num_colors': 15,
+            'blur_amount': 2,
+            'edge_threshold': 50,
+            'min_area': 50,
+            'output_format': 'svg'
+        }
         
         # Merge with provided settings
-        process_settings = {**mobile_defaults, **settings}
-        
-        # Add mobile flag to settings
-        process_settings['mobile_optimized'] = is_mobile
-        
-        logger.info(f"Processing for {'mobile' if is_mobile else 'desktop'} device with settings: {process_settings}")
+        process_settings = {**default_settings, **settings}
         
         # Find input file
         input_file = None
