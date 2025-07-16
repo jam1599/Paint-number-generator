@@ -55,7 +55,8 @@ CORS(app, resources={
             "Origin",
             "X-Requested-With",
             "X-Device-Type",
-            "x-device-type"
+            "x-device-type",
+            "x-processing-mode"
         ],
         "expose_headers": [
             "Content-Type",
@@ -72,7 +73,7 @@ def after_request(response):
     if origin in ALLOWED_ORIGINS:
         response.headers['Access-Control-Allow-Origin'] = origin
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With, X-Device-Type, x-device-type'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Accept, Origin, X-Requested-With, X-Device-Type, x-device-type, x-processing-mode'
     response.headers['Access-Control-Max-Age'] = '3600'
     response.headers['Vary'] = 'Origin'
     return response
