@@ -60,11 +60,6 @@ const MOBILE_PRESETS = {
   }
 };
 
-// Detect mobile device
-const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-};
-
 const ProcessingSettings = ({ 
   settings, 
   defaultSettings, 
@@ -73,9 +68,8 @@ const ProcessingSettings = ({
   uploadedFile, 
   processing 
 }) => {
-  const [debounceTimeout, setDebounceTimeout] = useState(null);
-  const [clickCount, setClickCount] = useState(0);
   const [showWarning, setShowWarning] = useState(false);
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   const handleSettingChange = (key, value) => {
     const newSettings = { ...settings, [key]: value };
@@ -90,29 +84,18 @@ const ProcessingSettings = ({
     onSettingsChange(MOBILE_PRESETS[preset].settings);
   };
 
-  // Debounced process handler with retry logic
+  // Improved process handler for both mobile and desktop
   const handleProcess = useCallback(() => {
-    // Clear any existing timeout
-    if (debounceTimeout) {
-      clearTimeout(debounceTimeout);
-    }
-
-    // Increment click count
-    setClickCount(prev => prev + 1);
-
-    // Show warning if clicked too many times
-    if (clickCount > 2) {
-      setShowWarning(true);
-      setClickCount(0); // Reset count
-      return;
-    }
-
-    // Set debounce timeout
-    setDebounceTimeout(setTimeout(() => {
+    if (processing) return; // Prevent multiple clicks while processing
+    
+    try {
+      // Call process immediately without debounce
       onProcess();
-      setClickCount(0); // Reset count after successful process
-    }, 500)); // 500ms debounce
-  }, [onProcess, debounceTimeout, clickCount]);
+    } catch (error) {
+      console.error('Processing error:', error);
+      setShowWarning(true);
+    }
+  }, [onProcess, processing]);
 
   // Handle closing warning message
   const handleCloseWarning = () => {
@@ -131,7 +114,7 @@ const ProcessingSettings = ({
       </Typography>
 
       {/* Mobile Performance Presets */}
-      {isMobileDevice() && (
+      {isMobile && (
         <Paper sx={{ p: 2, mb: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <PhoneAndroid />
@@ -293,7 +276,7 @@ const ProcessingSettings = ({
       </Grid>
 
       {/* Mobile Presets Section */}
-      {isMobileDevice() && (
+      {isMobile && (
         <Paper elevation={2} sx={{ p: 3, mt: 4 }}>
           <Typography variant="h6" gutterBottom>
             Performance Presets
@@ -320,7 +303,7 @@ const ProcessingSettings = ({
         </Paper>
       )}
 
-      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center' }}>
+      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
         <Button
           variant="contained"
           size="large"
@@ -328,13 +311,19 @@ const ProcessingSettings = ({
           disabled={processing}
           startIcon={processing ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
           sx={{ 
-            minWidth: 200,
+            minWidth: isMobile ? '100%' : 200,
+            height: isMobile ? 56 : 'auto',
+            fontSize: isMobile ? '1.2rem' : 'inherit',
             position: 'relative',
             '&:disabled': {
               backgroundColor: 'primary.main',
               color: 'white',
               opacity: 0.7
-            }
+            },
+            '&:active': {
+              transform: 'scale(0.98)',
+            },
+            transition: 'transform 0.1s ease-in-out'
           }}
         >
           {processing ? 'Processing...' : 'Generate Paint by Numbers'}
@@ -344,16 +333,29 @@ const ProcessingSettings = ({
           variant="outlined"
           onClick={resetToDefaults}
           disabled={processing}
+          sx={{
+            minWidth: isMobile ? '100%' : 'auto',
+            height: isMobile ? 48 : 'auto'
+          }}
         >
           Reset to Defaults
         </Button>
       </Box>
 
+      {/* Mobile processing indicator */}
+      {isMobile && processing && (
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            Please keep the app open while processing...
+          </Typography>
+        </Box>
+      )}
+
       <Paper elevation={1} sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5' }}>
         <Typography variant="body2" color="text.secondary">
           <strong>Processing Preview:</strong> Your image will be processed with {settings.num_colors || 15} colors, 
           blur level {settings.blur_amount || 0}, and edge sensitivity {settings.edge_threshold || 50}. 
-          {isMobileDevice() ? ' Mobile optimizations are enabled for faster processing.' : ''} 
+          {isMobile ? ' Mobile optimizations are enabled for faster processing.' : ''} 
           Please wait while processing completes.
         </Typography>
       </Paper>
