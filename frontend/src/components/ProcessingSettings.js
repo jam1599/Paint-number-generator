@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -15,9 +15,8 @@ import {
   Chip,
   ButtonGroup,
   CircularProgress,
-  Snackbar,
   Alert,
-  LinearProgress
+  Snackbar
 } from '@mui/material';
 import { Settings, PlayArrow, Speed, HighQuality, PhoneAndroid } from '@mui/icons-material';
 
@@ -87,126 +86,23 @@ const ProcessingSettings = ({
   uploadedFile, 
   processing 
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
-  const buttonRef = useRef(null);
-  const touchStartRef = useRef(null);
-  const deviceProfile = getDeviceProfile();
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  // Reset submitting state when processing ends
-  useEffect(() => {
-    if (!processing && isSubmitting) {
-      setIsSubmitting(false);
-    }
-  }, [processing]);
 
   const handleSettingChange = (key, value) => {
     const newSettings = { ...settings, [key]: value };
     onSettingsChange(newSettings);
   };
 
-  const resetToDefaults = () => {
-    onSettingsChange(defaultSettings);
-  };
-
-  const applyPreset = (preset) => {
-    onSettingsChange(PERFORMANCE_PRESETS[preset].settings);
-  };
-
-  // Improved mobile touch handling
-  const handleTouchStart = useCallback((e) => {
-    e.preventDefault();
-    if (processing || isSubmitting) return;
+  const handleProcessClick = async () => {
+    if (processing) return;
     
-    touchStartRef.current = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-      time: Date.now()
-    };
-    
-    if (buttonRef.current) {
-      buttonRef.current.style.transform = 'scale(0.98)';
-    }
-  }, [processing, isSubmitting]);
-
-  const handleTouchEnd = useCallback((e) => {
-    e.preventDefault();
-    if (processing || isSubmitting) return;
-    
-    if (buttonRef.current) {
-      buttonRef.current.style.transform = 'scale(1)';
-    }
-    
-    if (!touchStartRef.current) return;
-    
-    const touchEnd = {
-      x: e.changedTouches[0].clientX,
-      y: e.changedTouches[0].clientY,
-      time: Date.now()
-    };
-    
-    // Check if it was a valid tap (not a scroll or long press)
-    const distance = Math.sqrt(
-      Math.pow(touchEnd.x - touchStartRef.current.x, 2) +
-      Math.pow(touchEnd.y - touchStartRef.current.y, 2)
-    );
-    
-    const duration = touchEnd.time - touchStartRef.current.time;
-    
-    // If it was a quick tap without much movement
-    if (distance < 10 && duration < 500) {
-      handleProcess(e);
-    }
-    
-    touchStartRef.current = null;
-  }, [processing, isSubmitting]);
-
-  // Improved process handler
-  const handleProcess = useCallback(async (event) => {
-    event.preventDefault();
-    
-    if (processing || isSubmitting) {
-      return;
-    }
-
     try {
-      setIsSubmitting(true);
-      
-      // Disable button immediately
-      if (buttonRef.current) {
-        buttonRef.current.disabled = true;
-      }
-
       await onProcess();
     } catch (error) {
       console.error('Processing error:', error);
       setShowWarning(true);
     }
-  }, [onProcess, processing, isSubmitting]);
-
-  // Add touch event listeners for mobile
-  useEffect(() => {
-    if (!buttonRef.current || !isMobile) return;
-
-    const button = buttonRef.current;
-    
-    button.addEventListener('touchstart', handleTouchStart);
-    button.addEventListener('touchend', handleTouchEnd);
-    button.addEventListener('touchcancel', handleTouchEnd);
-
-    return () => {
-      button.removeEventListener('touchstart', handleTouchStart);
-      button.removeEventListener('touchend', handleTouchEnd);
-      button.removeEventListener('touchcancel', handleTouchEnd);
-    };
-  }, [isMobile, handleTouchStart, handleTouchEnd]);
-
-  // Get appropriate preset based on device capabilities
-  const getRecommendedPreset = () => {
-    if (deviceProfile.isHighPerformance) return 'desktop_high';
-    if (!deviceProfile.isMobile) return 'desktop_balanced';
-    return 'mobile_optimized';
   };
 
   return (
@@ -441,82 +337,70 @@ const ProcessingSettings = ({
         </Paper>
       )}
 
-      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center', flexDirection: deviceProfile.isMobile ? 'column' : 'row' }}>
+      {/* Process Button */}
+      <Box sx={{ 
+        mt: 4, 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center', 
+        gap: 2 
+      }}>
         <Button
-          ref={buttonRef}
           variant="contained"
+          color="primary"
           size="large"
-          onClick={!isMobile ? handleProcess : undefined}
-          disabled={processing || isSubmitting}
-          startIcon={processing ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />}
-          sx={{ 
-            minWidth: deviceProfile.isMobile ? '100%' : 200,
-            height: deviceProfile.isMobile ? 56 : 'auto',
-            fontSize: deviceProfile.isMobile ? '1.2rem' : 'inherit',
-            position: 'relative',
-            '&:disabled': {
-              backgroundColor: 'primary.main',
-              color: 'white',
-              opacity: 0.7
+          onClick={handleProcessClick}
+          disabled={processing}
+          sx={{
+            width: isMobile ? '100%' : 'auto',
+            minWidth: isMobile ? '100%' : '200px',
+            height: isMobile ? '56px' : 'auto',
+            fontSize: isMobile ? '1.2rem' : '1rem',
+            backgroundColor: 'primary.main',
+            '&:hover': {
+              backgroundColor: 'primary.dark',
             },
             '&:active': {
               transform: 'scale(0.98)',
             },
-            transition: 'transform 0.1s ease-in-out, opacity 0.2s ease-in-out',
-            WebkitTapHighlightColor: 'transparent',
-            cursor: (processing || isSubmitting) ? 'not-allowed' : 'pointer',
-            pointerEvents: (processing || isSubmitting) ? 'none' : 'auto',
-            touchAction: 'none' // Prevent double-tap zoom on mobile
+            '&:disabled': {
+              backgroundColor: 'rgba(0, 0, 0, 0.12)',
+            }
           }}
         >
-          {processing ? 'Processing...' : isSubmitting ? 'Starting...' : 'Generate Paint by Numbers'}
+          {processing ? (
+            <>
+              <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
+              Processing...
+            </>
+          ) : (
+            <>
+              <PlayArrow sx={{ mr: 1 }} />
+              Generate Paint by Numbers
+            </>
+          )}
         </Button>
-        
-        <Button
-          variant="outlined"
-          onClick={resetToDefaults}
-          disabled={processing || isSubmitting}
-          sx={{
-            minWidth: deviceProfile.isMobile ? '100%' : 'auto',
-            height: deviceProfile.isMobile ? 48 : 'auto'
-          }}
-        >
-          Reset to Defaults
-        </Button>
+
+        {processing && (
+          <Typography variant="body2" color="textSecondary" align="center">
+            {isMobile 
+              ? 'Please keep the app open while processing...'
+              : 'Processing your image...'}
+          </Typography>
+        )}
       </Box>
 
-      {/* Processing state indicator */}
-      {(processing || isSubmitting) && (
-        <Box sx={{ mt: 2, width: '100%' }}>
-          <LinearProgress />
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
-            {deviceProfile.isMobile ? 
-              'Please keep the app open while processing... This may take a few minutes.' : 
-              'Processing your image...'}
-          </Typography>
-        </Box>
-      )}
-
-      <Paper elevation={1} sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5' }}>
-        <Typography variant="body2" color="text.secondary">
-          <strong>Processing Preview:</strong> Your image will be processed with {settings.num_colors || 15} colors, 
-          blur level {settings.blur_amount || 0}, and edge sensitivity {settings.edge_threshold || 50}. 
-          {deviceProfile.isMobile ? ' Mobile optimizations are enabled for faster processing.' : ''} 
-          Please wait while processing completes.
-        </Typography>
-      </Paper>
-
       {/* Warning Snackbar */}
-      <Snackbar 
-        open={showWarning} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={showWarning}
+        autoHideDuration={6000}
         onClose={() => setShowWarning(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setShowWarning(false)} severity="warning" sx={{ width: '100%' }}>
-          {deviceProfile.isMobile ? 
-            'Processing failed. Please try using a smaller image or lower quality settings.' :
-            'Processing failed. Please try again.'}
+        <Alert severity="warning" onClose={() => setShowWarning(false)}>
+          {isMobile
+            ? 'Processing failed. Please try again with lower quality settings or a smaller image.'
+            : 'Processing failed. Please try again.'}
         </Alert>
       </Snackbar>
     </Box>
