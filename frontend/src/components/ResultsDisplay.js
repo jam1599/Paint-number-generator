@@ -13,9 +13,24 @@ import {
 } from '@mui/material';
 import { Download, Refresh, CheckCircle } from '@mui/icons-material';
 
+/**
+ * ResultsDisplay Component
+ * Displays the results of the paint-by-numbers generation process including:
+ * - Generated template preview
+ * - Download options for template, reference, and solution files
+ * - Processing settings used
+ * - Instructions for painting
+ * 
+ * @param {Object} props
+ * @param {Object} props.results - Contains file_id and settings used for generation
+ * @param {Function} props.onDownload - Callback for download action
+ * @param {Function} props.onReset - Callback to reset and create another image
+ */
 const ResultsDisplay = ({ results, onDownload, onReset }) => {
+  // Track image loading errors for fallback display
   const [imageError, setImageError] = useState(false);
 
+  // Early return if no results available
   if (!results) {
     return (
       <Alert severity="error">
@@ -24,9 +39,11 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
     );
   }
 
+  // Extract necessary data from results
   const { file_id, settings_used } = results;
   const apiUrl = process.env.REACT_APP_API_URL || '';
 
+  // Define metadata for each downloadable file type
   const fileDescriptions = {
     template: {
       title: 'Template.png',
@@ -45,6 +62,13 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
     },
   };
 
+  /**
+   * Handles the file download process
+   * Creates a temporary anchor element to trigger the download
+   * and cleans up after download starts
+   * 
+   * @param {string} filename - The name of the file to download
+   */
   const handleDownload = async (filename) => {
     try {
       // Remove any double slashes and ensure correct path
@@ -72,124 +96,384 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
     }
   };
 
+  /**
+   * Handles image loading errors
+   * Sets error state to show fallback UI when preview image fails to load
+   */
   const handleImageError = () => {
     console.error('Image failed to load');
     setImageError(true);
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <CheckCircle color="success" sx={{ fontSize: 32 }} />
-        <Typography variant="h4">
+    <Box 
+      sx={{ 
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: { xs: '16px', sm: '24px', md: '32px' },
+        boxSizing: 'border-box'
+      }}
+    >
+      {/* Page Title */}
+      <Typography 
+        variant="h1" 
+        sx={{
+          fontSize: { xs: '28px', sm: '32px', md: '40px' },
+          textAlign: 'center',
+          color: '#333333',
+          fontWeight: 600,
+          mb: { xs: 3, sm: 4 },
+          textTransform: 'uppercase'
+        }}
+      >
+        FREE PAINT BY NUMBERS GENERATOR
+      </Typography>
+
+      {/* Header Section */}
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'center', 
+        gap: 2, 
+        mb: { xs: 3, sm: 4 },
+        width: '100%',
+        maxWidth: '800px',
+        margin: '0 auto'
+      }}>
+        <CheckCircle 
+          color="success" 
+          sx={{ 
+            fontSize: { xs: 40, sm: 48 },
+            color: '#4CAF50'
+          }} 
+        />
+        <Typography 
+          variant="h2" 
+          sx={{ 
+            fontSize: { xs: '24px', sm: '28px' },
+            textAlign: 'center',
+            color: '#4CAF50',
+            fontWeight: 500
+          }}
+        >
           Your Paint by Numbers is Ready!
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Alert severity="success" sx={{ mb: 3 }}>
+      {/* Success Message and Preview Section */}
+      {/* Main Content Container */}
+      <Box sx={{ 
+        mb: { xs: 4, sm: 5 }, 
+        width: '100%',
+        maxWidth: '800px',
+        margin: '0 auto'
+      }}>
+        {/* Success Message */}
+        <Alert 
+          severity="success" 
+          sx={{ 
+            mb: 3,
+            '& .MuiAlert-message': {
+              fontSize: { xs: '16px', sm: '18px' }
+            },
+            backgroundColor: '#E8F5E9',
+            color: '#2E7D32'
+          }}
+        >
           Successfully generated your paint-by-numbers template with {settings_used?.colors || ''} colors.
         </Alert>
 
         {/* Template Preview */}
         <Paper 
-          elevation={3} 
+          elevation={2} 
           sx={{ 
             mb: 4, 
-            p: 2,
-            maxWidth: '100%',
-            overflow: 'hidden',
+            p: { xs: 1, sm: 2 },
+            borderRadius: '12px',
+            backgroundColor: '#ffffff',
+            overflow: 'hidden'
           }}
         >
           {!imageError ? (
-            <img 
-              src={`${apiUrl}/download/${file_id}_template.png`}
-              alt="Paint by Numbers Template"
-              onError={handleImageError}
-              style={{ 
-                maxWidth: '100%', 
-                height: 'auto',
-                borderRadius: '4px',
+            <Box sx={{ 
+              position: 'relative',
+              width: '100%',
+              '&::before': {
+                content: '""',
                 display: 'block',
-                margin: '0 auto'
-              }}
-            />
+                paddingTop: '75%' // 4:3 aspect ratio
+              }
+            }}>
+              <img 
+                src={`${apiUrl}/download/${file_id}_template.png`}
+                alt="Paint by Numbers Template"
+                onError={handleImageError}
+                style={{ 
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '8px'
+                }}
+              />
+            </Box>
           ) : (
-            <Alert severity="error">
+            <Alert 
+              severity="error"
+              sx={{
+                m: 2,
+                backgroundColor: '#FFF3F3',
+                color: '#D32F2F'
+              }}
+            >
               Failed to load preview image. Don't worry - you can still download the files below.
             </Alert>
           )}
         </Paper>
       </Box>
 
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-        Download Your Files
-      </Typography>
+      {/* Download Section */}
+      <Box sx={{
+        maxWidth: '800px',
+        margin: '0 auto',
+        width: '100%'
+      }}>
+        <Typography 
+          variant="h2" 
+          sx={{ 
+            fontSize: { xs: '24px', sm: '28px' },
+            textAlign: 'center',
+            color: '#333333',
+            fontWeight: 500,
+            mb: 3
+          }}
+        >
+          Download Your Files
+        </Typography>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {['reference', 'solution', 'template'].map((fileType) => (
-          <Grid item xs={12} sm={4} key={fileType}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" component="div" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <span>{fileDescriptions[fileType].icon}</span>
-                  {fileDescriptions[fileType].title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {fileDescriptions[fileType].description}
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  startIcon={<Download />}
-                  onClick={() => handleDownload(`${file_id}_${fileType}.png`)}
-                >
-                  DOWNLOAD
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+        <Grid 
+          container 
+          spacing={{ xs: 2, sm: 3 }} 
+          sx={{ 
+            mb: 4
+          }}
+        >
+          {['reference', 'solution', 'template'].map((fileType) => (
+            <Grid item xs={12} sm={4} key={fileType}>
+              <Card sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: '12px',
+                transition: 'all 0.3s ease',
+                border: '1px solid #E0E0E0',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                  borderColor: '#2196F3'
+                }
+              }}>
+                <CardContent sx={{ 
+                  flexGrow: 1,
+                  p: { xs: 2, sm: 3 }
+                }}>
+                  <Typography 
+                    variant="h6" 
+                    component="div" 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1,
+                      mb: 1.5,
+                      fontSize: { xs: '18px', sm: '20px' },
+                      fontWeight: 500
+                    }}
+                  >
+                    <span style={{ fontSize: '24px' }}>{fileDescriptions[fileType].icon}</span>
+                    {fileDescriptions[fileType].title}
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{
+                      color: '#666666',
+                      fontSize: { xs: '14px', sm: '16px' },
+                      lineHeight: 1.5
+                    }}
+                  >
+                    {fileDescriptions[fileType].description}
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ p: { xs: 2, sm: 3 }, pt: 0 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Download />}
+                    onClick={() => handleDownload(`${file_id}_${fileType}.png`)}
+                    sx={{
+                      py: 1.5,
+                      textTransform: 'none',
+                      fontSize: { xs: '16px', sm: '18px' },
+                      borderRadius: '8px',
+                      backgroundColor: '#2196F3',
+                      '&:hover': {
+                        backgroundColor: '#1976D2'
+                      }
+                    }}
+                  >
+                    Download
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
 
-      <Box sx={{ mt: 4, textAlign: 'right' }}>
+      {/* Create Another Button */}
+      <Box sx={{ 
+        mt: { xs: 4, sm: 5 }, 
+        mb: { xs: 4, sm: 5 },
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center'
+      }}>
         <Button
-          variant="outlined"
-          color="primary"
+          variant="contained"
+          color="secondary"
           startIcon={<Refresh />}
           onClick={onReset}
+          sx={{
+            py: 2,
+            px: { xs: 4, sm: 6 },
+            textTransform: 'uppercase',
+            fontSize: { xs: '16px', sm: '18px' },
+            fontWeight: 600,
+            borderRadius: '8px',
+            backgroundColor: '#4CAF50',
+            '&:hover': {
+              backgroundColor: '#388E3C'
+            }
+          }}
         >
-          CREATE ANOTHER
+          Create Another Image
         </Button>
       </Box>
 
       {/* Processing Settings Display */}
-      <Paper sx={{ p: 2, mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
+      <Paper sx={{ 
+        p: { xs: 2, sm: 3 }, 
+        mb: { xs: 3, sm: 4 },
+        width: '100%',
+        maxWidth: '800px',
+        margin: '0 auto',
+        borderRadius: '12px',
+        backgroundColor: '#F5F5F5'
+      }}>
+        <Typography 
+          variant="h3" 
+          sx={{ 
+            fontSize: { xs: '20px', sm: '24px' },
+            textAlign: 'center',
+            color: '#333333',
+            fontWeight: 500,
+            mb: 2
+          }}
+        >
           Processing Settings Used
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Chip label={`${settings_used?.colors || ''} Colors`} color="primary" />
-          <Chip label={`Blur: ${settings_used?.blur || ''}`} color="secondary" />
-          <Chip label={`Edge: ${settings_used?.edge || ''}`} color="info" />
-          <Chip label={`Min Area: ${settings_used?.min_area || ''}px`} color="success" />
+        <Box sx={{ 
+          display: 'flex', 
+          gap: { xs: 1, sm: 2 }, 
+          flexWrap: 'wrap',
+          justifyContent: 'center'
+        }}>
+          <Chip 
+            label={`${settings_used?.colors || ''} Colors`} 
+            color="primary"
+            sx={{ 
+              px: 2,
+              py: 0.5,
+              fontSize: { xs: '14px', sm: '16px' },
+              borderRadius: '16px'
+            }}
+          />
+          <Chip 
+            label={`Blur: ${settings_used?.blur || ''}`} 
+            color="secondary"
+            sx={{ 
+              px: 2,
+              py: 0.5,
+              fontSize: { xs: '14px', sm: '16px' },
+              borderRadius: '16px'
+            }}
+          />
+          <Chip 
+            label={`Edge: ${settings_used?.edge || ''}`} 
+            color="info"
+            sx={{ 
+              px: 2,
+              py: 0.5,
+              fontSize: { xs: '14px', sm: '16px' },
+              borderRadius: '16px'
+            }}
+          />
+          <Chip 
+            label={`Min Area: ${settings_used?.min_area || ''}px`} 
+            color="success"
+            sx={{ 
+              px: 2,
+              py: 0.5,
+              fontSize: { xs: '14px', sm: '16px' },
+              borderRadius: '16px'
+            }}
+          />
         </Box>
       </Paper>
 
       {/* How to Paint Instructions */}
-      <Paper sx={{ p: 2, mt: 4 }}>
-        <Typography variant="h6" gutterBottom>
+      <Paper sx={{ 
+        p: { xs: 2, sm: 3 }, 
+        width: '100%',
+        maxWidth: '800px',
+        margin: '0 auto',
+        borderRadius: '12px',
+        backgroundColor: '#F5F5F5',
+        mb: { xs: 4, sm: 5 }
+      }}>
+        <Typography 
+          variant="h3" 
+          sx={{ 
+            fontSize: { xs: '20px', sm: '24px' },
+            textAlign: 'center',
+            color: '#333333',
+            fontWeight: 500,
+            mb: 2
+          }}
+        >
           How to Paint:
         </Typography>
-        <ol>
-          <li>Print the template and color reference</li>
-          <li>Match paint colors to the numbered swatches</li>
-          <li>Paint each numbered area with the corresponding color</li>
-          <li>Use the solution image as a reference</li>
-        </ol>
+        <Box sx={{ 
+          maxWidth: '600px', 
+          margin: '0 auto',
+          px: { xs: 2, sm: 3 }
+        }}>
+          <ol style={{ 
+            paddingLeft: '24px',
+            margin: '0',
+            fontSize: '16px',
+            color: '#555555',
+            lineHeight: 1.6
+          }}>
+            <li style={{ marginBottom: '12px' }}>Print the template and color reference</li>
+            <li style={{ marginBottom: '12px' }}>Match paint colors to the numbered swatches</li>
+            <li style={{ marginBottom: '12px' }}>Paint each numbered area with the corresponding color</li>
+            <li style={{ marginBottom: '12px' }}>Use the solution image as a reference</li>
+          </ol>
+        </Box>
       </Paper>
     </Box>
   );
