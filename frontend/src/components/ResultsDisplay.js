@@ -111,7 +111,7 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
         width: '100%',
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: { xs: '16px', sm: '24px', md: '32px' },
+        padding: { xs: '12px', sm: '24px', md: '32px' },
         boxSizing: 'border-box'
       }}
     >
@@ -119,12 +119,14 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
       <Typography 
         variant="h1" 
         sx={{
-          fontSize: { xs: '28px', sm: '32px', md: '40px' },
+          fontSize: { xs: '24px', sm: '32px', md: '40px' },
           textAlign: 'center',
           color: '#333333',
           fontWeight: 600,
-          mb: { xs: 3, sm: 4 },
-          textTransform: 'uppercase'
+          mb: { xs: 2, sm: 4 },
+          textTransform: 'uppercase',
+          px: { xs: 1, sm: 0 },
+          lineHeight: { xs: 1.2, sm: 1.3 }
         }}
       >
         FREE PAINT BY NUMBERS GENERATOR
@@ -173,12 +175,14 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
         <Alert 
           severity="success" 
           sx={{ 
-            mb: 3,
+            mb: { xs: 2, sm: 3 },
+            mx: { xs: 1, sm: 0 },
             '& .MuiAlert-message': {
-              fontSize: { xs: '16px', sm: '18px' }
+              fontSize: { xs: '14px', sm: '16px' }
             },
             backgroundColor: '#E8F5E9',
-            color: '#2E7D32'
+            color: '#2E7D32',
+            borderRadius: { xs: '6px', sm: '8px' }
           }}
         >
           Successfully generated your paint-by-numbers template with {settings_used?.colors || ''} colors.
@@ -188,9 +192,10 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
         <Paper 
           elevation={2} 
           sx={{ 
-            mb: 4, 
+            mb: { xs: 3, sm: 4 }, 
             p: { xs: 1, sm: 2 },
-            borderRadius: '12px',
+            mx: { xs: 1, sm: 0 },
+            borderRadius: { xs: '8px', sm: '12px' },
             backgroundColor: '#ffffff',
             overflow: 'hidden'
           }}
@@ -256,9 +261,10 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
 
         <Grid 
           container 
-          spacing={{ xs: 2, sm: 3 }} 
+          spacing={{ xs: 1.5, sm: 3 }} 
           sx={{ 
-            mb: 4
+            mb: 4,
+            px: { xs: 1, sm: 0 }
           }}
         >
           {['reference', 'solution', 'template'].map((fileType) => (
@@ -267,7 +273,7 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: '12px',
+                borderRadius: { xs: '8px', sm: '12px' },
                 transition: 'all 0.3s ease',
                 border: '1px solid #E0E0E0',
                 '&:hover': {
@@ -370,17 +376,18 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
         width: '100%',
         maxWidth: '800px',
         margin: '0 auto',
-        borderRadius: '12px',
+        mx: { xs: 1, sm: 'auto' },
+        borderRadius: { xs: '8px', sm: '12px' },
         backgroundColor: '#F5F5F5'
       }}>
         <Typography 
           variant="h3" 
           sx={{ 
-            fontSize: { xs: '20px', sm: '24px' },
+            fontSize: { xs: '18px', sm: '24px' },
             textAlign: 'center',
             color: '#333333',
             fontWeight: 500,
-            mb: 2
+            mb: { xs: 1.5, sm: 2 }
           }}
         >
           Processing Settings Used
