@@ -132,7 +132,7 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
         FREE PAINT BY NUMBERS GENERATOR
       </Typography>
 
-      {/* Header Section */}
+      {/* Header Section - Temporarily commented out
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column',
@@ -162,6 +162,7 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
           Your Paint by Numbers is Ready!
         </Typography>
       </Box>
+      */}
 
       {/* Success Message and Preview Section */}
       {/* Main Content Container */}
