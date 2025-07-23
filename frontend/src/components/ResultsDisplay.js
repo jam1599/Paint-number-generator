@@ -34,23 +34,37 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   
   const [imageError, setImageError] = useState(false);
   // Add inside your component (e.g. ResultsDisplay)
-  useEffect(() => {
+    useEffect(() => {
+    let lastHeight = document.body.scrollHeight;
+    let timeoutId = null;
+
     const sendHeight = () => {
-      if (window.parent) {
+      const newHeight = document.body.scrollHeight;
+      if (window.parent && newHeight !== lastHeight) {
         window.parent.postMessage(
-          { type: 'resize', height: document.body.scrollHeight },
+          { type: 'resize', height: newHeight },
           '*'
         );
+        lastHeight = newHeight;
       }
     };
-    sendHeight();
-    window.addEventListener('resize', sendHeight);
-    // Also send height after every render (for dynamic content)
-    const observer = new MutationObserver(sendHeight);
+
+    // Debounce function to avoid rapid firing
+    const debouncedSendHeight = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(sendHeight, 100);
+    };
+
+    debouncedSendHeight();
+    window.addEventListener('resize', debouncedSendHeight);
+
+    const observer = new MutationObserver(debouncedSendHeight);
     observer.observe(document.body, { childList: true, subtree: true });
+
     return () => {
-      window.removeEventListener('resize', sendHeight);
+      window.removeEventListener('resize', debouncedSendHeight);
       observer.disconnect();
+      clearTimeout(timeoutId);
     };
   }, []);
   // Early return if no results available
