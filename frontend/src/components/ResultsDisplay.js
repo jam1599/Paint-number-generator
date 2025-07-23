@@ -116,7 +116,10 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
         maxWidth: '1200px',
         margin: '0 auto',
         padding: { xs: '12px', sm: '24px', md: '32px' },
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        minHeight: '100vh', // <-- Add this line
+        display: 'flex',    // <-- Add this line
+        flexDirection: 'column' // <-- Add this line
       }}
     >
       {/* Page Title */}
