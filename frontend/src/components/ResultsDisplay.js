@@ -33,38 +33,38 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   // Track image loading errors for fallback display
   
   const [imageError, setImageError] = useState(false);
-  useEffect(() => {
-    let timeoutId = null;
+  // useEffect(() => {
+  //   let timeoutId = null;
 
-    const sendHeight = () => {
-      const newHeight = document.body.scrollHeight;
-      if (window.parent) {
-        window.parent.postMessage(
-          { type: 'resize', height: newHeight },
-          '*'
-        );
-      }
-    };
+  //   const sendHeight = () => {
+  //     const newHeight = document.body.scrollHeight;
+  //     if (window.parent) {
+  //       window.parent.postMessage(
+  //         { type: 'resize', height: newHeight },
+  //         '*'
+  //       );
+  //     }
+  //   };
 
-    const debouncedSendHeight = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(sendHeight, 100);
-    };
+  //   const debouncedSendHeight = () => {
+  //     clearTimeout(timeoutId);
+  //     timeoutId = setTimeout(sendHeight, 100);
+  //   };
 
-    // Initial send
-    debouncedSendHeight();
-    window.addEventListener('resize', debouncedSendHeight);
+  //   // Initial send
+  //   debouncedSendHeight();
+  //   window.addEventListener('resize', debouncedSendHeight);
 
-    const observer = new MutationObserver(debouncedSendHeight);
-    observer.observe(document.body, { childList: true, subtree: true });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+  //   const observer = new MutationObserver(debouncedSendHeight);
+  //   observer.observe(document.body, { childList: true, subtree: true });
+  //   observer.observe(document.documentElement, { childList: true, subtree: true });
 
-    return () => {
-      window.removeEventListener('resize', debouncedSendHeight);
-      observer.disconnect();
-      clearTimeout(timeoutId);
-    };
-  }, []);
+  //   return () => {
+  //     window.removeEventListener('resize', debouncedSendHeight);
+  //     observer.disconnect();
+  //     clearTimeout(timeoutId);
+  //   };
+  // }, []);
 
   // Early return if no results available
   if (!results) {
