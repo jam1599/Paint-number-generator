@@ -110,8 +110,9 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   };
 
  // ...existing code...
+// ...existing code...
 return (
- <Box
+  <Box
     sx={{
       width: '100%',
       maxWidth: '1200px',
@@ -148,7 +149,7 @@ return (
         flexDirection: 'column',
         overflowY: 'auto', // allow scrolling if needed
       }}
->
+    >
       {/* Success Message */}
       <Alert 
         severity="success" 
@@ -184,7 +185,7 @@ return (
             '&::before': {
               content: '""',
               display: 'block',
-              paddingTop: { xs: '100%', sm: '75%' } // 1:1 on mobile, 4:3 on desktop
+              paddingTop: { xs: '100%', sm: '75%' }
             }
           }}>
             <img 
@@ -216,220 +217,216 @@ return (
           </Alert>
         )}
       </Paper>
-    </Box>
-    {/* Download Section */}
-    <Box sx={{
-      maxWidth: '800px',
-      margin: '0 auto',
-      width: '100%'
-    }}>
-      <Typography 
-        variant="h2" 
-        sx={{ 
-          fontSize: { xs: '20px', sm: '28px' },
-          textAlign: 'center',
-          color: '#333333',
-          fontWeight: 500,
-          mb: 2
-        }}
-      >
-        Download Your Files
-      </Typography>
-      <Grid 
-        container 
-        spacing={{ xs: 1, sm: 3 }} 
-        sx={{ 
-          mb: 3,
-          px: { xs: 0, sm: 0 }
-        }}
-      >
-        {['reference', 'solution', 'template'].map((fileType) => (
-          <Grid item xs={12} sm={4} key={fileType}>
-            <Card sx={{ 
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: { xs: '6px', sm: '12px' },
-              transition: 'all 0.3s ease',
-              border: '1px solid #E0E0E0',
-              '&:hover': {
-                transform: { sm: 'translateY(-4px)' },
-                boxShadow: { sm: '0 8px 16px rgba(0,0,0,0.1)' },
-                borderColor: { sm: '#2196F3' }
-              }
-            }}>
-              <CardContent sx={{ 
-                flexGrow: 1,
-                p: { xs: 1.5, sm: 3 }
-              }}>
-                <Typography 
-                  variant="h6" 
-                  component="div" 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 1,
-                    mb: 1,
-                    fontSize: { xs: '16px', sm: '20px' },
-                    fontWeight: 500
-                  }}
-                >
-                  <span style={{ fontSize: '22px' }}>{fileDescriptions[fileType].icon}</span>
-                  {fileDescriptions[fileType].title}
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  sx={{
-                    color: '#666666',
-                    fontSize: { xs: '13px', sm: '16px' },
-                    lineHeight: 1.5
-                  }}
-                >
-                  {fileDescriptions[fileType].description}
-                </Typography>
-              </CardContent>
-              <CardActions sx={{ p: { xs: 1.5, sm: 3 }, pt: 0 }}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  startIcon={<Download />}
-                  onClick={() => handleDownload(`${file_id}_${fileType}.png`)}
-                  sx={{
-                    py: 1.2,
-                    textTransform: 'none',
-                    fontSize: { xs: '15px', sm: '18px' },
-                    borderRadius: '8px',
-                    backgroundColor: '#2196F3',
-                    '&:hover': {
-                      backgroundColor: '#1976D2'
-                    }
-                  }}
-                >
-                  Download
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
-    {/* Create Another Button */}
-    <Box sx={{ 
-      mt: { xs: 3, sm: 5 }, 
-      mb: { xs: 3, sm: 5 },
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center'
-    }}>
-      <Button
-        variant="contained"
-        color="secondary"
-        startIcon={<Refresh />}
-        onClick={onReset}
-        sx={{
-          py: 1.5,
-          px: { xs: 3, sm: 6 },
-          textTransform: 'uppercase',
-          fontSize: { xs: '15px', sm: '18px' },
-          fontWeight: 600,
-          borderRadius: '8px',
-          backgroundColor: '#4CAF50',
-          '&:hover': {
-            backgroundColor: '#388E3C'
-          }
-        }}
-      >
-        Create Another Image
-      </Button>
-    </Box>
-    {/* Processing Settings Display */}
-    <Paper sx={{ 
-      p: { xs: 1.5, sm: 3 }, 
-      mb: { xs: 2, sm: 4 },
-      width: '100%',
-      maxWidth: '800px',
-      margin: '0 auto',
-      mx: { xs: 0, sm: 'auto' },
-      borderRadius: { xs: '6px', sm: '12px' },
-      backgroundColor: '#F5F5F5'
-    }}>
-      <Typography 
-        variant="h3" 
-        sx={{ 
-          fontSize: { xs: '16px', sm: '24px' },
-          textAlign: 'center',
-          color: '#333333',
-          fontWeight: 500,
-          mb: { xs: 1, sm: 2 }
-        }}
-      >
-        Processing Settings Used
-      </Typography>
-
-      <Box sx={{ 
-        display: 'flex', 
-        gap: { xs: 1, sm: 2 }, 
-        flexWrap: { xs: 'wrap', sm: 'nowrap' }, // wrap chips on mobile
-        overflowX: { xs: 'visible', sm: 'auto' }, // no scroll on mobile
-        justifyContent: { xs: 'center', sm: 'center' }, // center on all screens
-        pb: { xs: 1, sm: 0 }
+      {/* Download Section */}
+      <Box sx={{
+        maxWidth: '800px',
+        margin: '0 auto',
+        width: '100%'
       }}>
-        <Chip 
-          label={`${settings_used?.colors || ''} Colors`} 
-          color="primary"
+        <Typography 
+          variant="h2" 
           sx={{ 
-            px: 2,
-            py: 0.5,
-            fontSize: { xs: '13px', sm: '16px' },
-            borderRadius: '16px',
-            minWidth: { xs: '100px', sm: '90px' }, // wider on mobile
-            mb: { xs: 1, sm: 0 }
+            fontSize: { xs: '20px', sm: '28px' },
+            textAlign: 'center',
+            color: '#333333',
+            fontWeight: 500,
+            mb: 2
           }}
-        />
-        <Chip 
-          label={`Blur: ${settings_used?.blur || ''}`} 
-          color="secondary"
+        >
+          Download Your Files
+        </Typography>
+        <Grid 
+          container 
+          spacing={{ xs: 1, sm: 3 }} 
           sx={{ 
-            px: 2,
-            py: 0.5,
-            fontSize: { xs: '13px', sm: '16px' },
-            borderRadius: '16px',
-            minWidth: { xs: '100px', sm: '90px' },
-            mb: { xs: 1, sm: 0 }
+            mb: 3,
+            px: { xs: 0, sm: 0 }
           }}
-        />
-        <Chip 
-          label={`Edge: ${settings_used?.edge || ''}`} 
-          color="info"
-          sx={{ 
-            px: 2,
-            py: 0.5,
-            fontSize: { xs: '13px', sm: '16px' },
-            borderRadius: '16px',
-            minWidth: { xs: '100px', sm: '90px' },
-            mb: { xs: 1, sm: 0 }
-          }}
-        />
-        <Chip 
-          label={`Min Area: ${settings_used?.min_area || ''}px`} 
-          color="success"
-          sx={{ 
-            px: 2,
-            py: 0.5,
-            fontSize: { xs: '13px', sm: '16px' },
-            borderRadius: '16px',
-            minWidth: { xs: '120px', sm: '110px' },
-            mb: { xs: 1, sm: 0 }
-          }}
-        />
+        >
+          {['reference', 'solution', 'template'].map((fileType) => (
+            <Grid item xs={12} sm={4} key={fileType}>
+              <Card sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: { xs: '6px', sm: '12px' },
+                transition: 'all 0.3s ease',
+                border: '1px solid #E0E0E0',
+                '&:hover': {
+                  transform: { sm: 'translateY(-4px)' },
+                  boxShadow: { sm: '0 8px 16px rgba(0,0,0,0.1)' },
+                  borderColor: { sm: '#2196F3' }
+                }
+              }}>
+                <CardContent sx={{ 
+                  flexGrow: 1,
+                  p: { xs: 1.5, sm: 3 }
+                }}>
+                  <Typography 
+                    variant="h6" 
+                    component="div" 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1,
+                      mb: 1,
+                      fontSize: { xs: '16px', sm: '20px' },
+                      fontWeight: 500
+                    }}
+                  >
+                    <span style={{ fontSize: '22px' }}>{fileDescriptions[fileType].icon}</span>
+                    {fileDescriptions[fileType].title}
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{
+                      color: '#666666',
+                      fontSize: { xs: '13px', sm: '16px' },
+                      lineHeight: 1.5
+                    }}
+                  >
+                    {fileDescriptions[fileType].description}
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ p: { xs: 1.5, sm: 3 }, pt: 0 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Download />}
+                    onClick={() => handleDownload(`${file_id}_${fileType}.png`)}
+                    sx={{
+                      py: 1.2,
+                      textTransform: 'none',
+                      fontSize: { xs: '15px', sm: '18px' },
+                      borderRadius: '8px',
+                      backgroundColor: '#2196F3',
+                      '&:hover': {
+                        backgroundColor: '#1976D2'
+                      }
+                    }}
+                  >
+                    Download
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
-    </Paper>
+      {/* Create Another Button */}
+      <Box sx={{ 
+        mt: { xs: 3, sm: 5 }, 
+        mb: { xs: 3, sm: 5 },
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center'
+      }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<Refresh />}
+          onClick={onReset}
+          sx={{
+            py: 1.5,
+            px: { xs: 3, sm: 6 },
+            textTransform: 'uppercase',
+            fontSize: { xs: '15px', sm: '18px' },
+            fontWeight: 600,
+            borderRadius: '8px',
+            backgroundColor: '#4CAF50',
+            '&:hover': {
+              backgroundColor: '#388E3C'
+            }
+          }}
+        >
+          Create Another Image
+        </Button>
+      </Box>
+      {/* Processing Settings Display */}
+      <Paper sx={{ 
+        p: { xs: 1.5, sm: 3 }, 
+        mb: { xs: 2, sm: 4 },
+        width: '100%',
+        maxWidth: '800px',
+        margin: '0 auto',
+        mx: { xs: 0, sm: 'auto' },
+        borderRadius: { xs: '6px', sm: '12px' },
+        backgroundColor: '#F5F5F5'
+      }}>
+        <Typography 
+          variant="h3" 
+          sx={{ 
+            fontSize: { xs: '16px', sm: '24px' },
+            textAlign: 'center',
+            color: '#333333',
+            fontWeight: 500,
+            mb: { xs: 1, sm: 2 }
+          }}
+        >
+          Processing Settings Used
+        </Typography>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: { xs: 1, sm: 2 }, 
+          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+          overflowX: { xs: 'visible', sm: 'auto' },
+          justifyContent: { xs: 'center', sm: 'center' },
+          pb: { xs: 1, sm: 0 }
+        }}>
+          <Chip 
+            label={`${settings_used?.colors || ''} Colors`} 
+            color="primary"
+            sx={{ 
+              px: 2,
+              py: 0.5,
+              fontSize: { xs: '13px', sm: '16px' },
+              borderRadius: '16px',
+              minWidth: { xs: '100px', sm: '90px' },
+              mb: { xs: 1, sm: 0 }
+            }}
+          />
+          <Chip 
+            label={`Blur: ${settings_used?.blur || ''}`} 
+            color="secondary"
+            sx={{ 
+              px: 2,
+              py: 0.5,
+              fontSize: { xs: '13px', sm: '16px' },
+              borderRadius: '16px',
+              minWidth: { xs: '100px', sm: '90px' },
+              mb: { xs: 1, sm: 0 }
+            }}
+          />
+          <Chip 
+            label={`Edge: ${settings_used?.edge || ''}`} 
+            color="info"
+            sx={{ 
+              px: 2,
+              py: 0.5,
+              fontSize: { xs: '13px', sm: '16px' },
+              borderRadius: '16px',
+              minWidth: { xs: '100px', sm: '90px' },
+              mb: { xs: 1, sm: 0 }
+            }}
+          />
+          <Chip 
+            label={`Min Area: ${settings_used?.min_area || ''}px`} 
+            color="success"
+            sx={{ 
+              px: 2,
+              py: 0.5,
+              fontSize: { xs: '13px', sm: '16px' },
+              borderRadius: '16px',
+              minWidth: { xs: '120px', sm: '110px' },
+              mb: { xs: 1, sm: 0 }
+            }}
+          />
+        </Box>
+      </Paper>
+    </Box>
   </Box>
-
 );
-// ...existing code...
-    
 
 };
 
