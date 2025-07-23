@@ -33,13 +33,12 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   // Track image loading errors for fallback display
   
   const [imageError, setImageError] = useState(false);
-  // Add inside your component (e.g. ResultsDisplay)
 useEffect(() => {
   let lastHeight = 0;
   let timeoutId = null;
 
   const sendHeight = () => {
-    const newHeight = document.documentElement.scrollHeight;
+    const newHeight = document.body.scrollHeight;
     if (window.parent && newHeight !== lastHeight) {
       window.parent.postMessage(
         { type: 'resize', height: newHeight },
