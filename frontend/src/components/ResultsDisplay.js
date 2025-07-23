@@ -33,40 +33,40 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   // Track image loading errors for fallback display
   
   const [imageError, setImageError] = useState(false);
-  useEffect(() => {
-    let timeoutId = null;
-    let lastHeight = 0;
+// useEffect(() => {
+//   let timeoutId = null;
+//   let lastHeight = 0;
 
-    const sendHeight = () => {
-      const newHeight = document.body.scrollHeight;
-      if (window.parent && newHeight !== lastHeight) {
-        window.parent.postMessage(
-          { type: 'resize', height: newHeight },
-          '*'
-        );
-        lastHeight = newHeight;
-      }
-    };
+//   const sendHeight = () => {
+//     const newHeight = document.body.scrollHeight;
+//     if (window.parent && newHeight !== lastHeight) {
+//       window.parent.postMessage(
+//         { type: 'resize', height: newHeight },
+//         '*'
+//       );
+//       lastHeight = newHeight;
+//     }
+//   };
 
-    const debouncedSendHeight = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(sendHeight, 100);
-    };
+//   const debouncedSendHeight = () => {
+//     clearTimeout(timeoutId);
+//     timeoutId = setTimeout(sendHeight, 100);
+//   };
 
-    // Initial send
-    debouncedSendHeight();
-    window.addEventListener('resize', debouncedSendHeight);
+//   // Initial send
+//   debouncedSendHeight();
+//   window.addEventListener('resize', debouncedSendHeight);
 
-    const observer = new MutationObserver(debouncedSendHeight);
-    observer.observe(document.body, { childList: true, subtree: true });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+//   const observer = new MutationObserver(debouncedSendHeight);
+//   observer.observe(document.body, { childList: true, subtree: true });
+//   observer.observe(document.documentElement, { childList: true, subtree: true });
 
-    return () => {
-      window.removeEventListener('resize', debouncedSendHeight);
-      observer.disconnect();
-      clearTimeout(timeoutId);
-    };
-  }, []);
+//   return () => {
+//     window.removeEventListener('resize', debouncedSendHeight);
+//     observer.disconnect();
+//     clearTimeout(timeoutId);
+//   };
+// }, []);
 
   // Early return if no results available
   if (!results) {
@@ -197,45 +197,56 @@ return (
         Successfully generated your paint-by-numbers template with {settings_used?.colors || ''} colors.
       </Alert>
       {/* Template Preview */}
-<Paper 
-  elevation={2} 
-  sx={{ 
-    mb: { xs: 2, sm: 4 }, 
-    p: { xs: 0.5, sm: 2 },
-    mx: { xs: 0, sm: 0 },
-    borderRadius: { xs: '6px', sm: '12px' },
-    backgroundColor: '#ffffff',
-    overflow: 'hidden'
-  }}
->
-  {!imageError ? (
-    <Box sx={{ width: '100%' }}>
+      <Paper 
+        elevation={2} 
+        sx={{ 
+          mb: { xs: 2, sm: 4 }, 
+          p: { xs: 0.5, sm: 2 },
+          mx: { xs: 0, sm: 0 },
+          borderRadius: { xs: '6px', sm: '12px' },
+          backgroundColor: '#ffffff',
+          overflow: 'hidden'
+        }}
+      >
+        {!imageError ? (
+    <Box sx={{
+      position: 'relative',
+      width: '100%',
+      '&::before': {
+        content: '""',
+        display: 'block',
+        paddingTop: { xs: '100%', sm: '75%' }
+      }
+    }}>
       <img
         src={`${apiUrl}/download/${file_id}_template.png`}
         alt="Paint by Numbers Template"
         onError={handleImageError}
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
           width: '100%',
-          height: 'auto',
-          display: 'block',
+          height: '100%',
+          objectFit: 'contain',
           borderRadius: '6px'
         }}
       />
     </Box>
-  ) : (
-    <Alert 
-      severity="error"
-      sx={{
-        m: 1,
-        backgroundColor: '#FFF3F3',
-        color: '#D32F2F',
-        fontSize: { xs: '13px', sm: '16px' }
-      }}
-    >
-      Failed to load preview image. Don't worry - you can still download the files below.
-    </Alert>
-  )}
-</Paper>
+        ) : (
+          <Alert 
+            severity="error"
+            sx={{
+              m: 1,
+              backgroundColor: '#FFF3F3',
+              color: '#D32F2F',
+              fontSize: { xs: '13px', sm: '16px' }
+            }}
+          >
+            Failed to load preview image. Don't worry - you can still download the files below.
+          </Alert>
+        )}
+      </Paper>
       {/* Download Section */}
       <Box sx={{
         maxWidth: '800px',
