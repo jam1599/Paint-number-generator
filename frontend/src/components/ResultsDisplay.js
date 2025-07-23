@@ -143,8 +143,6 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
     setImageError(true);
   };
 
- // ...existing code...
-// ...existing code...
 return (
   <Box
       sx={{
@@ -209,30 +207,30 @@ return (
         }}
       >
         {!imageError ? (
-          <Box sx={{ 
-            position: 'relative',
-            width: '100%',
-            '&::before': {
-              content: '""',
-              display: 'block',
-              paddingTop: { xs: '100%', sm: '75%' }
-            }
-          }}>
-            <img 
-              src={`${apiUrl}/download/${file_id}_template.png`}
-              alt="Paint by Numbers Template"
-              onError={handleImageError}
-              style={{ 
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                borderRadius: '6px'
-              }}
-            />
-          </Box>
+    <Box sx={{
+      position: 'relative',
+      width: '100%',
+      '&::before': {
+        content: '""',
+        display: 'block',
+        paddingTop: { xs: '100%', sm: '75%' }
+      }
+    }}>
+      <img
+        src={`${apiUrl}/download/${file_id}_template.png`}
+        alt="Paint by Numbers Template"
+        onError={handleImageError}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          borderRadius: '6px'
+        }}
+      />
+    </Box>
         ) : (
           <Alert 
             severity="error"
