@@ -110,14 +110,20 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   };
 
   return (
-    <Box 
-      sx={{ 
-        width: '100%',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: { xs: '12px', sm: '24px', md: '32px' },
-        boxSizing: 'border-box'
-      }}
+  <Box 
+    sx={{ 
+      width: '100%',
+      minWidth: 0,
+      maxWidth: '100vw', // Allow full viewport width
+      minHeight: '100vh', // Stretch vertically to show all content
+      margin: '0 auto',
+      padding: { xs: '12px', sm: '24px', md: '32px' },
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'stretch', // Stretch children horizontally
+      overflowX: 'auto',     // Allow horizontal scroll if needed
+    }}
     >
       {/* Page Title */}
       <Typography 
