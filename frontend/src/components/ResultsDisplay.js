@@ -34,39 +34,38 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   
   const [imageError, setImageError] = useState(false);
   // Add inside your component (e.g. ResultsDisplay)
-    useEffect(() => {
-    let lastHeight = document.body.scrollHeight;
-    let timeoutId = null;
+useEffect(() => {
+  let lastHeight = 0;
+  let timeoutId = null;
 
-    const sendHeight = () => {
-      const newHeight = document.body.scrollHeight;
-      if (window.parent && newHeight !== lastHeight) {
-        window.parent.postMessage(
-          { type: 'resize', height: newHeight },
-          '*'
-        );
-        lastHeight = newHeight;
-      }
-    };
+  const sendHeight = () => {
+    const newHeight = document.documentElement.scrollHeight;
+    if (window.parent && newHeight !== lastHeight) {
+      window.parent.postMessage(
+        { type: 'resize', height: newHeight },
+        '*'
+      );
+      lastHeight = newHeight;
+    }
+  };
 
-    // Debounce function to avoid rapid firing
-    const debouncedSendHeight = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(sendHeight, 100);
-    };
+  const debouncedSendHeight = () => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(sendHeight, 100);
+  };
 
-    debouncedSendHeight();
-    window.addEventListener('resize', debouncedSendHeight);
+  debouncedSendHeight();
+  window.addEventListener('resize', debouncedSendHeight);
 
-    const observer = new MutationObserver(debouncedSendHeight);
-    observer.observe(document.body, { childList: true, subtree: true });
+  const observer = new MutationObserver(debouncedSendHeight);
+  observer.observe(document.body, { childList: true, subtree: true });
 
-    return () => {
-      window.removeEventListener('resize', debouncedSendHeight);
-      observer.disconnect();
-      clearTimeout(timeoutId);
-    };
-  }, []);
+  return () => {
+    window.removeEventListener('resize', debouncedSendHeight);
+    observer.disconnect();
+    clearTimeout(timeoutId);
+  };
+}, []);
   // Early return if no results available
   if (!results) {
     return (
