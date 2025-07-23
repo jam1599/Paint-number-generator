@@ -111,41 +111,45 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
 
  // ...existing code...
 return (
-  <Box 
-    sx={{ 
+  <Box
+    sx={{
       width: '100%',
       maxWidth: '1200px',
       margin: '0 auto',
-      padding: { xs: '6px', sm: '24px', md: '32px' }, // less padding on mobile
+      padding: { xs: '6px', sm: '24px', md: '32px' },
       boxSizing: 'border-box',
       minHeight: '100vh',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      flexGrow: 1,
     }}
   >
     {/* Page Title */}
-    <Typography 
-      variant="h1" 
+    <Typography
+      variant="h1"
       sx={{
-        fontSize: { xs: '20px', sm: '32px', md: '40px' }, // smaller on mobile
+        fontSize: { xs: '20px', sm: '32px', md: '40px' },
         textAlign: 'center',
         color: '#333333',
         fontWeight: 600,
         mb: { xs: 1, sm: 4 },
         textTransform: 'uppercase',
         px: { xs: 0.5, sm: 0 },
-        lineHeight: { xs: 1.1, sm: 1.3 }
+        lineHeight: { xs: 1.1, sm: 1.3 },
       }}
     >
       FREE PAINT BY NUMBERS GENERATOR
     </Typography>
-    {/* ...existing code... */}
-    <Box sx={{ 
-      mb: { xs: 2, sm: 5 }, 
-      width: '100%',
-      maxWidth: '800px',
-      margin: '0 auto'
-    }}>
+    {/* Main Content Area */}
+    <Box
+      sx={{
+        flexGrow: 1, // <-- This makes the content stretch vertically
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+      }}
+    >
       {/* Success Message */}
       <Alert 
         severity="success" 
