@@ -28,31 +28,31 @@ import { Download, Refresh } from '@mui/icons-material';
  * @param {Function} props.onReset - Callback to reset and create another image
  */
 
-// Add inside your component (e.g. ResultsDisplay)
-useEffect(() => {
-  const sendHeight = () => {
-    if (window.parent) {
-      window.parent.postMessage(
-        { type: 'resize', height: document.body.scrollHeight },
-        '*'
-      );
-    }
-  };
-  sendHeight();
-  window.addEventListener('resize', sendHeight);
-  // Also send height after every render (for dynamic content)
-  const observer = new MutationObserver(sendHeight);
-  observer.observe(document.body, { childList: true, subtree: true });
-  return () => {
-    window.removeEventListener('resize', sendHeight);
-    observer.disconnect();
-  };
-}, []);
+
 const ResultsDisplay = ({ results, onDownload, onReset }) => {
   // Track image loading errors for fallback display
   
   const [imageError, setImageError] = useState(false);
-
+  // Add inside your component (e.g. ResultsDisplay)
+  useEffect(() => {
+    const sendHeight = () => {
+      if (window.parent) {
+        window.parent.postMessage(
+          { type: 'resize', height: document.body.scrollHeight },
+          '*'
+        );
+      }
+    };
+    sendHeight();
+    window.addEventListener('resize', sendHeight);
+    // Also send height after every render (for dynamic content)
+    const observer = new MutationObserver(sendHeight);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      window.removeEventListener('resize', sendHeight);
+      observer.disconnect();
+    };
+  }, []);
   // Early return if no results available
   if (!results) {
     return (
