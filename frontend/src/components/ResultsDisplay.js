@@ -366,9 +366,9 @@ return (
       <Box sx={{ 
         display: 'flex', 
         gap: { xs: 1, sm: 2 }, 
-        flexWrap: 'nowrap',
-        overflowX: 'auto', // allow horizontal scroll on mobile
-        justifyContent: { xs: 'flex-start', sm: 'center' },
+        flexWrap: { xs: 'wrap', sm: 'nowrap' }, // wrap chips on mobile
+        overflowX: { xs: 'visible', sm: 'auto' }, // no scroll on mobile
+        justifyContent: { xs: 'center', sm: 'center' }, // center on all screens
         pb: { xs: 1, sm: 0 }
       }}>
         <Chip 
@@ -379,7 +379,8 @@ return (
             py: 0.5,
             fontSize: { xs: '13px', sm: '16px' },
             borderRadius: '16px',
-            minWidth: '90px'
+            minWidth: { xs: '100px', sm: '90px' }, // wider on mobile
+            mb: { xs: 1, sm: 0 }
           }}
         />
         <Chip 
@@ -390,7 +391,8 @@ return (
             py: 0.5,
             fontSize: { xs: '13px', sm: '16px' },
             borderRadius: '16px',
-            minWidth: '90px'
+            minWidth: { xs: '100px', sm: '90px' },
+            mb: { xs: 1, sm: 0 }
           }}
         />
         <Chip 
@@ -401,7 +403,8 @@ return (
             py: 0.5,
             fontSize: { xs: '13px', sm: '16px' },
             borderRadius: '16px',
-            minWidth: '90px'
+            minWidth: { xs: '100px', sm: '90px' },
+            mb: { xs: 1, sm: 0 }
           }}
         />
         <Chip 
@@ -412,7 +415,8 @@ return (
             py: 0.5,
             fontSize: { xs: '13px', sm: '16px' },
             borderRadius: '16px',
-            minWidth: '110px'
+            minWidth: { xs: '120px', sm: '110px' },
+            mb: { xs: 1, sm: 0 }
           }}
         />
       </Box>
