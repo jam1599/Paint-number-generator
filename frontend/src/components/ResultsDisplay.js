@@ -111,7 +111,7 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
 
  // ...existing code...
 return (
-  <Box
+ <Box
     sx={{
       width: '100%',
       maxWidth: '1200px',
@@ -121,8 +121,7 @@ return (
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      justifyContent: 'flex-start',
-      flexGrow: 1,
+      background: '#fff'
     }}
   >
     {/* Page Title */}
@@ -136,7 +135,7 @@ return (
         mb: { xs: 1, sm: 4 },
         textTransform: 'uppercase',
         px: { xs: 0.5, sm: 0 },
-        lineHeight: { xs: 1.1, sm: 1.3 },
+        lineHeight: { xs: 1.1, sm: 1.3 }
       }}
     >
       FREE PAINT BY NUMBERS GENERATOR
@@ -144,12 +143,12 @@ return (
     {/* Main Content Area */}
     <Box
       sx={{
-        flexGrow: 1, // <-- This makes the content stretch vertically
+        flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'flex-start',
+        overflowY: 'auto', // allow scrolling if needed
       }}
-    >
+>
       {/* Success Message */}
       <Alert 
         severity="success" 
@@ -367,6 +366,7 @@ return (
       >
         Processing Settings Used
       </Typography>
+
       <Box sx={{ 
         display: 'flex', 
         gap: { xs: 1, sm: 2 }, 
@@ -426,6 +426,7 @@ return (
       </Box>
     </Paper>
   </Box>
+
 );
 // ...existing code...
     
