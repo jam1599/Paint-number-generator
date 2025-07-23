@@ -147,42 +147,39 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
 // ...existing code...
 return (
   <Box
-    sx={{
-      width: '100%',
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: { xs: '6px', sm: '24px', md: '32px' },
-      boxSizing: 'border-box',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      background: '#fff'
-    }}
-  >
-    {/* Page Title */}
-    <Typography
-      variant="h1"
       sx={{
-        fontSize: { xs: '20px', sm: '32px', md: '40px' },
-        textAlign: 'center',
-        color: '#333333',
-        fontWeight: 600,
-        mb: { xs: 1, sm: 4 },
-        textTransform: 'uppercase',
-        px: { xs: 0.5, sm: 0 },
-        lineHeight: { xs: 1.1, sm: 1.3 }
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: { xs: '6px', sm: '24px', md: '32px' },
+        boxSizing: 'border-box',
+        minHeight: '100vh',
+        background: '#fff'
       }}
     >
-      FREE PAINT BY NUMBERS GENERATOR
-    </Typography>
-    {/* Main Content Area */}
-    <Box
-  sx={{
-    flexGrow: 1,
-    display: 'flex',
-    flexDirection: 'column',
-  }}
->
+      {/* Page Title */}
+      <Typography
+        variant="h1"
+        sx={{
+          fontSize: { xs: '20px', sm: '32px', md: '40px' },
+          textAlign: 'center',
+          color: '#333333',
+          fontWeight: 600,
+          mb: { xs: 1, sm: 4 },
+          textTransform: 'uppercase',
+          px: { xs: 0.5, sm: 0 },
+          lineHeight: { xs: 1.1, sm: 1.3 }
+        }}
+      >
+        FREE PAINT BY NUMBERS GENERATOR
+      </Typography>
+      {/* Main Content Area */}
+      <Box
+        sx={{
+          // Remove flexGrow, display: flex, flexDirection, and any overflow here!
+          width: '100%',
+        }}
+      >
       {/* Success Message */}
       <Alert 
         severity="success" 
