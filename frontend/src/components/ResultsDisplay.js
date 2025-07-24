@@ -70,19 +70,6 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
 //   };
 // }, []);
 
- useEffect(() => {
-    // Only postMessage if this is inside an iframe (for local dev, this check avoids errors)
-    if (window.parent !== window) {
-      window.parent.postMessage(
-        {
-          type: 'resize',
-          height: document.body.scrollHeight
-        },
-        '*'
-      );
-    }
-  }, [results, imageError]); 
-
   // Early return if no results available
   if (!results) {
     return (
@@ -224,7 +211,7 @@ return (
     mx: { xs: 0, sm: 0 },
     borderRadius: { xs: '6px', sm: '12px' },
     backgroundColor: '#ffffff',
-  
+
   }}
 >
   {!imageError ? (

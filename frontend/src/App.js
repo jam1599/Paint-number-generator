@@ -69,7 +69,20 @@ function App() {
       setError('Using offline mode - API connection failed. Upload and processing features will not work until backend is connected.');
     }
   }, [error]);
-
+   // ---- Add this effect to always send updated height to parent ----
+  useEffect(() => {
+    // Only run in iframe (not in top window)
+    if (window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: 'resize',
+          height: document.body.scrollHeight
+        },
+        '*'
+      );
+    }
+  });
+  
   useEffect(() => {
     // Load default settings on component mount
     console.log('App component mounted');
