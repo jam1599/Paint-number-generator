@@ -201,14 +201,14 @@ const ProcessingSettings = ({
           Reset to Defaults
         </Button>
       </Box>
-
+{/* 
       <Paper elevation={1} sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5' }}>
         <Typography variant="body2" color="text.secondary">
           <strong>Processing Preview:</strong> Your image will be processed with {settings.num_colors || 15} colors, 
           blur level {settings.blur_amount || 0}, and edge sensitivity {settings.edge_threshold || 50}. 
           This may take 30-60 seconds depending on image size.
         </Typography>
-      </Paper>
+      </Paper> */}
     </Box>
   );
 };
