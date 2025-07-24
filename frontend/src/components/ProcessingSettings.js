@@ -34,8 +34,8 @@ const ProcessingSettings = ({
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box x={{ p: { xs: 1, sm: 2 } }}>
+      <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: { xs: '1.1rem', sm: '2rem' } }}>
         <Settings />
         Processing Settings
       </Typography>
@@ -47,7 +47,7 @@ const ProcessingSettings = ({
       {uploadedFile && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Selected Image
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -66,12 +66,12 @@ const ProcessingSettings = ({
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Paper elevation={2} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper elevation={2} sx={{ p: { xs: 1.2, sm: 3 } }}>
+            <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Color Settings
             </Typography>
             
-            <FormControl fullWidth sx={{ mb: 3 }}>
+            <FormControl fullWidth sx={{ mb: { xs: 1.2, sm: 3 } }}>
               <InputLabel>Number of Colors</InputLabel>
               <Select
                 value={settings.num_colors || 15}
@@ -105,7 +105,7 @@ const ProcessingSettings = ({
 
         <Grid item xs={12} md={6}>
           <Paper elevation={2} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Edge Detection
             </Typography>
             
@@ -134,11 +134,11 @@ const ProcessingSettings = ({
 
         <Grid item xs={12} md={6}>
           <Paper elevation={2} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Region Settings
             </Typography>
             
-            <FormControl fullWidth sx={{ mb: 3 }}>
+            <FormControl fullWidth sx={{ mb: { xs: 1.2, sm: 3 } }}>
               <InputLabel>Minimum Area</InputLabel>
               <Select
                 value={settings.min_area || 100}
@@ -158,7 +158,7 @@ const ProcessingSettings = ({
 
         <Grid item xs={12} md={6}>
           <Paper elevation={2} sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               Output Format
             </Typography>
             
@@ -181,10 +181,11 @@ const ProcessingSettings = ({
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center' }}>
+      <Box sx={{ mt: { xs: 2, sm: 4 }, display: 'flex', gap: { xs: 1, sm: 2 }, justifyContent: 'center' }}>
+
         <Button
           variant="contained"
-          size="large"
+          size="medium"
           onClick={onProcess}
           disabled={processing}
           startIcon={<PlayArrow />}
