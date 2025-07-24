@@ -97,6 +97,41 @@ function App() {
       NODE_ENV: process.env.NODE_ENV,
       API_URL: process.env.REACT_APP_API_URL
     });
+
+    useEffect(() => {
+  // Function to send current height to parent
+  function sendHeight() {
+    if (window.parent) {
+      window.parent.postMessage(
+        { type: 'resize', height: document.body.scrollHeight },
+        '*'
+      );
+    }
+  }
+
+  // Call on mount and when window is resized (e.g. mobile orientation change)
+  sendHeight();
+  window.addEventListener('resize', sendHeight);
+
+  // Observe DOM mutations for dynamic height changes
+  const observer = new MutationObserver(sendHeight);
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+
+  // Also call on images load (since images may affect height)
+  const images = document.querySelectorAll('img');
+  images.forEach(img => img.addEventListener('load', sendHeight));
+
+  // Also re-send height after results change, which likely changes content height
+  // (You're already using this dependency in another effect, but repeating here is ok)
+  // Optionally, add more dependencies if you have other dynamic content
+
+  return () => {
+    window.removeEventListener('resize', sendHeight);
+    observer.disconnect();
+    images.forEach(img => img.removeEventListener('load', sendHeight));
+  };
+}, [results]);
+
     
     // Set initialized to true immediately so UI shows
     setIsInitialized(true);

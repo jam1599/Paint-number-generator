@@ -233,7 +233,7 @@ return (
         Successfully generated your paint-by-numbers template with {settings_used?.colors || ''} colors.
       </Alert>
       {/* Template Preview */}
-      <Paper 
+     <Paper 
   elevation={2} 
   sx={{ 
     mb: { xs: 2, sm: 4 }, 
@@ -241,7 +241,6 @@ return (
     mx: { xs: 0, sm: 0 },
     borderRadius: { xs: '6px', sm: '12px' },
     backgroundColor: '#ffffff',
-
   }}
 >
   {!imageError ? (
@@ -249,32 +248,20 @@ return (
       width: '100%',
       textAlign: 'center'
     }}>
-      {/* <img
+      <img
         src={`${apiUrl}/download/${file_id}_template.png`}
         alt="Paint by Numbers Template"
         onError={handleImageError}
         style={{
           width: '100%',
+          maxWidth: '500px',
           height: 'auto',
+          aspectRatio: '1/1',
           objectFit: 'contain',
           borderRadius: '6px',
-          maxWidth: '800px',      // optional: cap the size for extra large images
           margin: '0 auto',
           display: 'block'
-        }} */}
-
-        <img
-  src={`${apiUrl}/download/${file_id}_template.png`}
-  alt="Paint by Numbers Template"
-  onError={handleImageError}
-  style={{
-    width: '500px',         // fixed width
-    height: '500px',        // fixed height
-    objectFit: 'contain',   // or 'cover' for cropping
-    borderRadius: '6px',
-    margin: '0 auto',
-    display: 'block'
-  }}
+        }}
       />
     </Box>
   ) : (
@@ -292,103 +279,103 @@ return (
   )}
 </Paper>
 
-      {/* Download Section */}
-      <Box sx={{
-        maxWidth: '800px',
-        margin: '0 auto',
-        width: '100%'
-      }}>
-        <Typography 
-          variant="h2" 
-          sx={{ 
-            fontSize: { xs: '20px', sm: '28px' },
-            textAlign: 'center',
-            color: '#333333',
-            fontWeight: 500,
-            mb: 2
-          }}
-        >
-          Download Your Files
-        </Typography>
-        <Grid 
-          container 
-          spacing={{ xs: 1, sm: 3 }} 
-          sx={{ 
-            mb: 3,
-            px: { xs: 0, sm: 0 }
-          }}
-        >
-          {['reference', 'solution', 'template'].map((fileType) => (
-            <Grid item xs={12} sm={4} key={fileType}>
-              <Card sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: { xs: '6px', sm: '12px' },
-                transition: 'all 0.3s ease',
-                border: '1px solid #E0E0E0',
+{/* Download Section */}
+<Box sx={{
+  maxWidth: { xs: '100%', sm: '800px' },
+  margin: '0 auto',
+  width: '100%'
+}}>
+  <Typography 
+    variant="h2" 
+    sx={{ 
+      fontSize: { xs: '18px', sm: '28px' },
+      textAlign: 'center',
+      color: '#333333',
+      fontWeight: 500,
+      mb: 2
+    }}
+  >
+    Download Your Files
+  </Typography>
+  <Grid 
+    container 
+    spacing={{ xs: 2, sm: 3 }} 
+    sx={{ 
+      mb: 3,
+      px: { xs: 0, sm: 0 }
+    }}
+  >
+    {['reference', 'solution', 'template'].map((fileType) => (
+      <Grid item xs={12} sm={4} key={fileType}>
+        <Card sx={{ 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: { xs: '6px', sm: '12px' },
+          transition: 'all 0.3s ease',
+          border: '1px solid #E0E0E0',
+          '&:hover': {
+            transform: { sm: 'translateY(-4px)' },
+            boxShadow: { sm: '0 8px 16px rgba(0,0,0,0.1)' },
+            borderColor: { sm: '#2196F3' }
+          }
+        }}>
+          <CardContent sx={{ 
+            flexGrow: 1,
+            p: { xs: 1, sm: 3 }
+          }}>
+            <Typography 
+              variant="h6" 
+              component="div" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                mb: 1,
+                fontSize: { xs: '15px', sm: '20px' },
+                fontWeight: 500
+              }}
+            >
+              <span style={{ fontSize: '22px' }}>{fileDescriptions[fileType].icon}</span>
+              {fileDescriptions[fileType].title}
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{
+                color: '#666666',
+                fontSize: { xs: '12px', sm: '16px' },
+                lineHeight: 1.5
+              }}
+            >
+              {fileDescriptions[fileType].description}
+            </Typography>
+          </CardContent>
+          <CardActions sx={{ p: { xs: 1, sm: 3 }, pt: 0, mt: 0 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              startIcon={<Download />}
+              onClick={() => handleDownload(`${file_id}_${fileType}.png`)}
+              sx={{
+                py: 1,
+                textTransform: 'none',
+                fontSize: { xs: '14px', sm: '18px' },
+                borderRadius: '8px',
+                backgroundColor: '#2196F3',
                 '&:hover': {
-                  transform: { sm: 'translateY(-4px)' },
-                  boxShadow: { sm: '0 8px 16px rgba(0,0,0,0.1)' },
-                  borderColor: { sm: '#2196F3' }
+                  backgroundColor: '#1976D2'
                 }
-              }}>
-                <CardContent sx={{ 
-                  flexGrow: 1,
-                  p: { xs: 1.5, sm: 3 }
-                }}>
-                  <Typography 
-                    variant="h6" 
-                    component="div" 
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 1,
-                      mb: 1,
-                      fontSize: { xs: '16px', sm: '20px' },
-                      fontWeight: 500
-                    }}
-                  >
-                    <span style={{ fontSize: '22px' }}>{fileDescriptions[fileType].icon}</span>
-                    {fileDescriptions[fileType].title}
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    sx={{
-                      color: '#666666',
-                      fontSize: { xs: '13px', sm: '16px' },
-                      lineHeight: 1.5
-                    }}
-                  >
-                    {fileDescriptions[fileType].description}
-                  </Typography>
-                </CardContent>
-                <CardActions sx={{ p: { xs: 1.5, sm: 3 }, pt: 0, mt: 0 }}>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    startIcon={<Download />}
-                    onClick={() => handleDownload(`${file_id}_${fileType}.png`)}
-                    sx={{
-                      py: 1.2,
-                      textTransform: 'none',
-                      fontSize: { xs: '15px', sm: '18px' },
-                      borderRadius: '8px',
-                      backgroundColor: '#2196F3',
-                      '&:hover': {
-                        backgroundColor: '#1976D2'
-                      }
-                    }}
-                  >
-                    Download
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+              }}
+            >
+              Download
+            </Button>
+          </CardActions>
+        </Card>
+      </Grid>
+    ))}
+  </Grid>
+</Box>
       {/* Create Another Button */}
       <Box sx={{ 
         mt: { xs: 3, sm: 5 }, 
