@@ -14,6 +14,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Download, Refresh } from '@mui/icons-material';
+
 /**
  * ResultsDisplay Component
  * Displays the results of the paint-by-numbers generation process including:
@@ -31,7 +32,8 @@ import { Download, Refresh } from '@mui/icons-material';
 
 const ResultsDisplay = ({ results, onDownload, onReset }) => {
   // Track image loading errors for fallback display
-  
+  const [imageGenerated, setImageGenerated] = useState(false);
+
   const [imageError, setImageError] = useState(false);
 // useEffect(() => {
 //   let timeoutId = null;
@@ -146,19 +148,21 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   };
 
 return (
-  <Box
-      sx={{
-        width: '100%',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        padding: { xs: '6px', sm: '24px', md: '32px' },
-        boxSizing: 'border-box',
-        background: '#fff',
-        minHeight: '100vh',
-        overflowY: 'auto' // Add this line
 
-      }}
-    >
+<Box
+  sx={{
+    width: '100%',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: { xs: '6px', sm: '24px', md: '32px' },
+    boxSizing: 'border-box',
+    background: '#fff',
+    minHeight: '100vh',
+    height: imageGenerated ? 'auto' : undefined,
+    overflowY: imageGenerated ? 'visible' : 'auto',
+    transition: 'height 0.3s'
+  }}
+>
       {/* Page Title */}
       <Typography
         variant="h1"
