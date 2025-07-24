@@ -153,8 +153,6 @@ return (
         margin: '0 auto',
         padding: { xs: '6px', sm: '24px', md: '32px' },
         boxSizing: 'border-box',
-        minHeight: '100vh', // Keep this for minimum viewport height
-        height: 'auto',     // Add this line to allow content to expand
         background: '#fff'
       }}
     >
