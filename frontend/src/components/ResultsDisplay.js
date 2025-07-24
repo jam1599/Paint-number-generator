@@ -461,7 +461,7 @@ return (
         </Box>
       </Paper>
     </Box>
-    <Box sx={{ height: { xs: 60, sm: 100, md: 140 } }} />
+
   </Box>
 );
 
