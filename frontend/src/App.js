@@ -69,27 +69,7 @@ function App() {
       setError('Using offline mode - API connection failed. Upload and processing features will not work until backend is connected.');
     }
   }, [error]);
-   // ---- Add this effect to always send updated height to parent ----
-  // 1. Resize the parent iframe whenever the content changes or images load
-    useEffect(() => {
-      const sendResize = () => {
-        window.parent.postMessage({
-          type: 'resize',
-          height: document.body.scrollHeight
-        }, '*');
-      };
-
-      sendResize(); // On mount/update
-
-      // Attach to all images in this component
-      const images = document.querySelectorAll('img');
-      images.forEach(img => img.addEventListener('load', sendResize));
-
-      return () => {
-        images.forEach(img => img.removeEventListener('load', sendResize));
-      };
-    }, [results]); // Add more dependencies if needed (e.g., imageError)
-    
+  
   useEffect(() => {
     // Load default settings on component mount
     console.log('App component mounted');
@@ -98,41 +78,57 @@ function App() {
       API_URL: process.env.REACT_APP_API_URL
     });
 
-    useEffect(() => {
-  // Function to send current height to parent
-  function sendHeight() {
-    if (window.parent) {
-      window.parent.postMessage(
-        { type: 'resize', height: document.body.scrollHeight },
-        '*'
-      );
+    // Set initialized to true immediately so UI shows
+    setIsInitialized(true);
+
+    // Then try to load settings
+    loadDefaultSettings();
+  }, [loadDefaultSettings]);
+
+  useEffect(() => {
+    // Function to send current height to parent
+    function sendHeight() {
+      if (window.parent) {
+        window.parent.postMessage(
+          { type: 'resize', height: document.body.scrollHeight },
+          '*'
+        );
+      }
     }
-  }
 
-  // Call on mount and when window is resized (e.g. mobile orientation change)
-  sendHeight();
-  window.addEventListener('resize', sendHeight);
+    // Resize the parent iframe whenever the content changes or images load
+    const sendResize = () => {
+      window.parent.postMessage({
+        type: 'resize',
+        height: document.body.scrollHeight
+      }, '*');
+    };
 
-  // Observe DOM mutations for dynamic height changes
-  const observer = new MutationObserver(sendHeight);
-  observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+    sendResize(); // On mount/update
 
-  // Also call on images load (since images may affect height)
-  const images = document.querySelectorAll('img');
-  images.forEach(img => img.addEventListener('load', sendHeight));
+    // Attach to all images in this component
+    const images = document.querySelectorAll('img');
+    images.forEach(img => img.addEventListener('load', sendResize));
 
-  // Also re-send height after results change, which likely changes content height
-  // (You're already using this dependency in another effect, but repeating here is ok)
-  // Optionally, add more dependencies if you have other dynamic content
+    // Call on mount and when window is resized (e.g. mobile orientation change)
+    sendHeight();
+    window.addEventListener('resize', sendHeight);
 
-  return () => {
-    window.removeEventListener('resize', sendHeight);
-    observer.disconnect();
-    images.forEach(img => img.removeEventListener('load', sendHeight));
-  };
-}, [results]);
+    // Observe DOM mutations for dynamic height changes
+    const observer = new MutationObserver(sendHeight);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
 
-    
+    // Also call on images load (since images may affect height)
+    images.forEach(img => img.addEventListener('load', sendHeight));
+
+    return () => {
+      window.removeEventListener('resize', sendHeight);
+      observer.disconnect();
+      images.forEach(img => img.removeEventListener('load', sendHeight));
+    };
+  }, [results]);
+
+  useEffect(() => {
     // Set initialized to true immediately so UI shows
     setIsInitialized(true);
     
