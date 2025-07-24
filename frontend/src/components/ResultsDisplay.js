@@ -158,11 +158,11 @@ return (
     boxSizing: 'border-box',
     background: '#fff',
     minHeight: '100vh',
-    height: imageGenerated ? 'auto' : undefined,
-    overflowY: imageGenerated ? 'visible' : 'auto',
+    overflowY: 'visible',       // Never adds scroll, just grows
     transition: 'height 0.3s'
   }}
 >
+
       {/* Page Title */}
       <Typography
         variant="h1"
@@ -204,55 +204,51 @@ return (
       </Alert>
       {/* Template Preview */}
       <Paper 
-        elevation={2} 
-        sx={{ 
-          mb: { xs: 2, sm: 4 }, 
-          p: { xs: 0.5, sm: 2 },
-          mx: { xs: 0, sm: 0 },
-          borderRadius: { xs: '6px', sm: '12px' },
-          backgroundColor: '#ffffff',
-          overflow: 'hidden'
-        }}
-      >
-        {!imageError ? (
+  elevation={2} 
+  sx={{ 
+    mb: { xs: 2, sm: 4 }, 
+    p: { xs: 0.5, sm: 2 },
+    mx: { xs: 0, sm: 0 },
+    borderRadius: { xs: '6px', sm: '12px' },
+    backgroundColor: '#ffffff',
+    overflow: 'hidden'
+  }}
+>
+  {!imageError ? (
     <Box sx={{
-      position: 'relative',
       width: '100%',
-      '&::before': {
-        content: '""',
-        display: 'block',
-        paddingTop: { xs: '100%', sm: '75%' }
-      }
+      textAlign: 'center'
     }}>
       <img
         src={`${apiUrl}/download/${file_id}_template.png`}
         alt="Paint by Numbers Template"
         onError={handleImageError}
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
           width: '100%',
-          height: '100%',
+          height: 'auto',
           objectFit: 'contain',
-          borderRadius: '6px'
+          borderRadius: '6px',
+          maxWidth: '800px',      // optional: cap the size for extra large images
+          margin: '0 auto',
+          display: 'block'
         }}
       />
     </Box>
-        ) : (
-          <Alert 
-            severity="error"
-            sx={{
-              m: 1,
-              backgroundColor: '#FFF3F3',
-              color: '#D32F2F',
-              fontSize: { xs: '13px', sm: '16px' }
-            }}
-          >
-            Failed to load preview image. Don't worry - you can still download the files below.
-          </Alert>
-        )}
-      </Paper>
+  ) : (
+    <Alert 
+      severity="error"
+      sx={{
+        m: 1,
+        backgroundColor: '#FFF3F3',
+        color: '#D32F2F',
+        fontSize: { xs: '13px', sm: '16px' }
+      }}
+    >
+      Failed to load preview image. Don't worry - you can still download the files below.
+    </Alert>
+  )}
+</Paper>
+
       {/* Download Section */}
       <Box sx={{
         maxWidth: '800px',
