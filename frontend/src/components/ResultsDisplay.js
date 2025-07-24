@@ -76,6 +76,7 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
   // ... other code ...
 
   // ADD THIS EFFECT HERE:
+  // 1. Resize the parent iframe whenever the content changes or images load
   useEffect(() => {
     const sendResize = () => {
       window.parent.postMessage({
@@ -84,28 +85,17 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
       }, '*');
     };
 
-    // Call when component mounts and updates
-    sendResize();
+    sendResize(); // On mount/update
 
-    // Call again when images finish loading
+    // Attach to all images in this component
     const images = document.querySelectorAll('img');
-    images.forEach(img => {
-      img.addEventListener('load', sendResize);
-    });
+    images.forEach(img => img.addEventListener('load', sendResize));
 
     return () => {
-      images.forEach(img => {
-        img.removeEventListener('load', sendResize);
-      });
+      images.forEach(img => img.removeEventListener('load', sendResize));
     };
-  }, [results]); // Or [results, imageError, imageGenerated] if those affect content height
-
-  // ... rest of your component ...
-  return (
-    <Box>...</Box>
-  );
-}
-
+  }, [results]); // Add more dependencies if needed (e.g., imageError)// Or [results, imageError, imageGenerated] if those affect content height
+  }
   // Early return if no results available
   if (!results) {
     return (

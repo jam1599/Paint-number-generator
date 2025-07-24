@@ -70,19 +70,26 @@ function App() {
     }
   }, [error]);
    // ---- Add this effect to always send updated height to parent ----
-  useEffect(() => {
-    // Only run in iframe (not in top window)
-    if (window.parent !== window) {
-      window.parent.postMessage(
-        {
+  // 1. Resize the parent iframe whenever the content changes or images load
+    useEffect(() => {
+      const sendResize = () => {
+        window.parent.postMessage({
           type: 'resize',
           height: document.body.scrollHeight
-        },
-        '*'
-      );
-    }
-  });
-  
+        }, '*');
+      };
+
+      sendResize(); // On mount/update
+
+      // Attach to all images in this component
+      const images = document.querySelectorAll('img');
+      images.forEach(img => img.addEventListener('load', sendResize));
+
+      return () => {
+        images.forEach(img => img.removeEventListener('load', sendResize));
+      };
+    }, [results]); // Add more dependencies if needed (e.g., imageError)
+    
   useEffect(() => {
     // Load default settings on component mount
     console.log('App component mounted');
