@@ -153,7 +153,10 @@ return (
         margin: '0 auto',
         padding: { xs: '6px', sm: '24px', md: '32px' },
         boxSizing: 'border-box',
-        background: '#fff'
+        background: '#fff',
+        minHeight: '100vh',
+        overflowY: 'auto' // Add this line
+
       }}
     >
       {/* Page Title */}
