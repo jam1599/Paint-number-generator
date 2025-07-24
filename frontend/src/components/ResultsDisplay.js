@@ -154,14 +154,18 @@ return (
     width: '100%',
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: { xs: '6px', sm: '24px', md: '32px' },
-    boxSizing: 'border-box',
+    padding: { xs: '32px', sm: '48px', md: '64px' },
     background: '#fff',
-    minHeight: '100vh',
-    overflowY: 'visible',       // Never adds scroll, just grows
-    transition: 'height 0.3s'
+    minHeight: '1300px',     // <-- increase this!
+    boxSizing: 'border-box',
+    borderRadius: '24px',
+    boxShadow: '0 8px 32px rgba(40,40,80,0.07)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start'
   }}
 >
+
 
       {/* Page Title */}
       <Typography
@@ -457,6 +461,7 @@ return (
         </Box>
       </Paper>
     </Box>
+    <Box sx={{ height: { xs: 60, sm: 100, md: 140 } }} />
   </Box>
 );
 
