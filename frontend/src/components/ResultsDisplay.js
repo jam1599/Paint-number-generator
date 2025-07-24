@@ -363,7 +363,7 @@ return (
                     {fileDescriptions[fileType].description}
                   </Typography>
                 </CardContent>
-                <CardActions sx={{ p: { xs: 1.5, sm: 3 }, pt: 0 }}>
+                <CardActions sx={{ p: { xs: 1.5, sm: 3 }, pt: 0, mt: 0 }}>
                   <Button
                     fullWidth
                     variant="contained"
@@ -392,7 +392,7 @@ return (
       {/* Create Another Button */}
       <Box sx={{ 
         mt: { xs: 3, sm: 5 }, 
-        mb: { xs: 3, sm: 5 },
+        mb: { xs: 3, sm: 1 },
         width: '100%',
         display: 'flex',
         justifyContent: 'center'
