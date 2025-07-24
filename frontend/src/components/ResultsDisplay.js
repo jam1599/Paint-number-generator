@@ -223,7 +223,7 @@ return (
       width: '100%',
       textAlign: 'center'
     }}>
-      <img
+      {/* <img
         src={`${apiUrl}/download/${file_id}_template.png`}
         alt="Paint by Numbers Template"
         onError={handleImageError}
@@ -235,7 +235,20 @@ return (
           maxWidth: '800px',      // optional: cap the size for extra large images
           margin: '0 auto',
           display: 'block'
-        }}
+        }} */}
+
+        <img
+  src={`${apiUrl}/download/${file_id}_template.png`}
+  alt="Paint by Numbers Template"
+  onError={handleImageError}
+  style={{
+    width: '500px',         // fixed width
+    height: '500px',        // fixed height
+    objectFit: 'contain',   // or 'cover' for cropping
+    borderRadius: '6px',
+    margin: '0 auto',
+    display: 'block'
+  }}
       />
     </Box>
   ) : (
