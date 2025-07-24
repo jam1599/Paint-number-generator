@@ -419,7 +419,7 @@ return (
         </Button>
       </Box>
       {/* Processing Settings Display */}
-      <Paper sx={{ 
+      {/* <Paper sx={{ 
         p: { xs: 1.5, sm: 3 }, 
         mb: { xs: 2, sm: 4 },
         width: '100%',
@@ -498,7 +498,7 @@ return (
             }}
           />
         </Box>
-      </Paper>
+      </Paper> */}
     </Box>
 
   </Box>
