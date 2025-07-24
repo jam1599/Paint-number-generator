@@ -69,6 +69,42 @@ const ResultsDisplay = ({ results, onDownload, onReset }) => {
 //     clearTimeout(timeoutId);
 //   };
 // }, []);
+  const ResultsDisplay = ({ results, onDownload, onReset }) => {
+  const [imageGenerated, setImageGenerated] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
+  // ... other code ...
+
+  // ADD THIS EFFECT HERE:
+  useEffect(() => {
+    const sendResize = () => {
+      window.parent.postMessage({
+        type: 'resize',
+        height: document.body.scrollHeight
+      }, '*');
+    };
+
+    // Call when component mounts and updates
+    sendResize();
+
+    // Call again when images finish loading
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+      img.addEventListener('load', sendResize);
+    });
+
+    return () => {
+      images.forEach(img => {
+        img.removeEventListener('load', sendResize);
+      });
+    };
+  }, [results]); // Or [results, imageError, imageGenerated] if those affect content height
+
+  // ... rest of your component ...
+  return (
+    <Box>...</Box>
+  );
+}
 
   // Early return if no results available
   if (!results) {
