@@ -211,7 +211,7 @@ return (
     mx: { xs: 0, sm: 0 },
     borderRadius: { xs: '6px', sm: '12px' },
     backgroundColor: '#ffffff',
-    overflow: 'hidden'
+  
   }}
 >
   {!imageError ? (
